@@ -1,5 +1,10 @@
 node_modules/
 dist/
+.next/
 .env
+.env.local
 .DS_Store
 *.log
+apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
+apps/agent/data/

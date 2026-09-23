@@ -1,27 +1,20 @@
 {
   "name": "fwf-photo-booth",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Face Wash Fox Photo Booth — local camera agent + LED display",
-  "type": "module",
-  "engines": {
-    "node": "20.x"
-  },
+  "description": "Face Wash Fox Photo Booth — cloud web + local camera agent",
+  "workspaces": [
+    "apps/web",
+    "apps/agent"
+  ],
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "start": "tsx src/index.ts",
-    "tunnel": "cloudflared tunnel --url http://localhost:3010",
-    "process": "tsx src/index.ts --once",
-    "generate-frame": "tsx src/generate-frame.ts",
-    "typecheck": "tsc --noEmit"
+    "dev": "npm run dev -w @fwf/web",
+    "build": "npm run build -w @fwf/web",
+    "start": "npm run start -w @fwf/agent",
+    "agent": "npm run start -w @fwf/agent",
+    "typecheck": "npm run typecheck -w @fwf/web && npm run typecheck -w @fwf/agent"
   },
-  "dependencies": {
-    "chokidar": "^5.0.0",
-    "sharp": "^0.35.4"
-  },
-  "devDependencies": {
-    "@types/node": "^26.6.1",
-    "tsx": "^4.23.13",
-    "typescript": "^5.9.3"
+  "engines": {
+    "node": ">=20"
   }
 }

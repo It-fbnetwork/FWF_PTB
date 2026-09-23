@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>FWF Photo Booth Display</title>
+    <link rel="stylesheet" href="/assets/display.css" />
+  </head>
+  <body>
+    <main id="stage" class="stage" aria-live="polite">
+      <div class="panel" style="container-type: inline-size">
+        <section id="idle" class="idle is-visible" aria-label="Idle screen">
+          <div class="idle__glow" aria-hidden="true"></div>
+          <div class="idle__frame">
+            <p class="idle__eyebrow">FACE WASH FOX</p>
+            <h1 class="idle__title">PHOTO<br />BOOTH</h1>
+            <p class="idle__hint">Waiting for the next moment</p>
+          </div>
+        </section>
+
+        <section id="photo" class="photo" aria-label="Photo display" hidden>
+          <img id="photo-image" class="photo__image" alt="FWF photo booth capture" />
+        </section>
+      </div>
+    </main>
+
+    <script src="/assets/display.js" type="module"></script>
+  </body>
+</html>

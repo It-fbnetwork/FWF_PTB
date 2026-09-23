@@ -1,128 +1,110 @@
-# FWF Photo Booth — Phase 1–3
+# FWF Photo Booth — Phase 4 (Cloud)
 
-Local **Camera Agent** + **LED Display** + **Check-in / Operator** for Face Wash Fox.
-
-## Flow (Phase 3)
+Cloud **check-in / operator / LED / download** on Vercel + Supabase.  
+Local **camera agent** on any store Mac with Sony Imaging Edge + ZV-E10.
 
 ```text
-Phone /checkin
-    ↓
-WAITING queue
-    ↓
-Operator /operator → PREPARE PHOTO
-    ↓
-Active session = A92X31
-    ↓
-ZV-E10 shutter
-    ↓
-Imaging Edge → ~/Pictures
-    ↓
-Agent process + frame
-    ↓
-Associate photo → A92X31
-    ↓
-/display LED + /checkin/A92X31 guest page
+Guest QR → Vercel /checkin
+              ↓
+         Supabase DB + Storage
+              ↑
+Store Mac agent (watch Pictures → frame → upload)
 ```
 
-Local agent (camera + LED + sessions on Mac). For a **public QR link** that works on any phone (4G/Wi‑Fi), use Cloudflare Tunnel below — Mac must stay online during the event. Full cloud DB/hosting is still Phase 4.
+Your personal Mac does **not** need to stay on for QR/check-in.  
+A store machine only needs to run the agent **while the booth is open**.
 
-## Run
+## Repo layout
 
-```bash
-npm install
-npm run start
+```text
+apps/web/       Next.js app (deploy to Vercel)
+apps/agent/     Camera agent (run on store Mac)
+supabase/       SQL schema
 ```
 
-Open on the booth Mac:
+Legacy `src/` + root `public/` are the old Phase 3 local-only stack.
 
-| Page | URL |
+## 1. Supabase
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. SQL Editor → run [`supabase/schema.sql`](supabase/schema.sql).
+3. Storage → confirm bucket **`photos`** exists and is **public**.
+4. Project Settings → API: copy URL + `service_role` key (+ anon key).
+
+## 2. Vercel
+
+1. Project linked to [It-fbnetwork/FWF_PTB](https://github.com/It-fbnetwork/FWF_PTB).
+2. **Root Directory** = `apps/web` (Settings → General).
+3. Environment variables:
+
+| Name | Value |
 | --- | --- |
-| LED Display | http://localhost:3010/display |
-| Customer check-in | http://localhost:3010/checkin |
-| Operator | http://localhost:3010/operator |
+| `SUPABASE_URL` | from Supabase |
+| `NEXT_PUBLIC_SUPABASE_URL` | same URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon |
+| `OPERATOR_PIN` | e.g. `4821` |
+| `AGENT_TOKEN` | long random secret |
+| `DISPLAY_DURATION_MS` | `8000` (optional) |
+| `DISPLAY_FADE_MS` | `700` (optional) |
 
-Default port is **3010**.
+4. Redeploy.
 
-## Public QR (Cloudflare Tunnel)
+Public URLs (QR):
 
-Keeps the Phase 3 agent on the Mac; exposes HTTPS so guests can check in from any network.
-
-1. Install once: `brew install cloudflared`
-2. Keep `npm run start` running (agent on port 3010).
-3. In a **second** terminal:
-
-```bash
-npm run tunnel
-```
-
-4. Copy the printed URL, e.g. `https://….trycloudflare.com`
-5. QR for guests → `https://….trycloudflare.com/checkin`
-
-| Page | Public path |
+| Page | Path |
 | --- | --- |
 | Check-in (QR) | `/checkin` |
-| Guest session / download | `/checkin/CODE` |
-| Operator (booth only — do not print on guest QR) | `/operator` |
+| Guest session | `/checkin/CODE` |
+| Operator | `/operator` (asks for PIN) |
 | LED | `/display` |
 
-Notes:
+## 3. Store Mac (any machine)
 
-- Quick tunnel URL **changes every time** you restart `npm run tunnel`. Regenerate the QR after each restart.
-- For a **stable** hostname (production events), create a named Cloudflare Tunnel + custom domain instead of quick tunnel.
-- `/operator` is also exposed via the tunnel — use only on staff devices; Phase 5 adds auth.
-- Do **not** rely on Vercel for this agent: it needs local Pictures watch + a long-running process.
+1. Install Sony Imaging Edge; tether ZV-E10; confirm JPEGs land in Pictures (or your folder).
+2. Clone repo and install:
 
-## Test Phase 3
-
-1. Keep `npm run start` running.
-2. (Optional public QR) Run `npm run tunnel` and open `/checkin` on the printed HTTPS URL from any phone.
-3. Open `/operator` on the Mac (or staff device).
-4. Submit name + phone + consent on check-in → get a session code.
-5. On operator, click **PREPARE PHOTO** for that guest.
-6. Terminal should show `Active session: CODE — Name`.
-7. Shoot with ZV-E10.
-8. Expect:
-   - Agent: `Associated … → CODE`
-   - `/display` shows framed photo
-   - `/checkin/CODE` shows the photo + download
-
-If you shoot with **no** active session, the photo still processes and displays, but is marked **unassigned**.
-
-## LED column (blueprint)
-
-Active LED area from `public/cot hop den (1).jpg`:
-
-```text
-960 × 1280  (portrait 3:4)
-Column shell: 1200 × 2620
+```bash
+git clone https://github.com/It-fbnetwork/FWF_PTB.git
+cd FWF_PTB
+npm install
 ```
 
-Processed photos and `/display` now target this portrait panel.
+3. Create `apps/agent/.env` (or export vars):
 
-- Do not associate photos without an explicit active session.
-- Do not process historical Pictures files on startup.
-- Processed output stays in `~/FWF_PhotoBooth/processed/` (never inside Pictures).
-- Sessions persist in `~/FWF_PhotoBooth/sessions.json`.
-
-## Project structure
-
-```text
-src/
-  index.ts
-  watcher.ts
-  processor.ts
-  sessions.ts          Active session + queue
-  server.ts            HTTP + SSE + APIs
-  events.ts
-public/
-  display.*
-  checkin.*
-  operator.*
-  session.*
-  app.css
+```bash
+export FWF_API_URL=https://YOUR_VERCEL_URL
+export FWF_AGENT_TOKEN=same-as-AGENT_TOKEN-on-vercel
+export FWF_WATCH_DIR="$HOME/Pictures"
+export FWF_DATA_DIR="$HOME/FWF_PhotoBooth"
 ```
 
-## Later phases
+4. Start agent:
 
-- Phase 4: Database, storage, cloud realtime, customer download hosting
-- Phase 5: Production LED ops, offline retry, admin auth, analytics, frame templates
+```bash
+npm run agent
+```
+
+5. Staff opens cloud `/operator` + PIN. LED browser opens cloud `/display`.  
+6. Print QR → `https://YOUR_VERCEL_URL/checkin`.
+
+## Local web dev
+
+```bash
+cp .env.example apps/web/.env.local
+# fill Supabase + PIN + token
+npm install
+npm run dev
+```
+
+## Verify checklist
+
+1. Open `/checkin` on phone (any network) → submit → get code page.
+2. `/operator` + PIN → see session → PREPARE PHOTO.
+3. Agent terminal shows active session when polled after prepare.
+4. Shoot ZV-E10 → agent processes + uploads.
+5. Guest page shows photo + download; `/display` shows framed image.
+
+## Env reference
+
+See [`.env.example`](.env.example).

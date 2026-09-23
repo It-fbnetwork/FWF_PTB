@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>FWF Photo Check-in</title>
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body>
+    <main class="shell shell--narrow">
+      <p class="brand">FACE WASH FOX</p>
+      <h1>PHOTO CHECK-IN</h1>
+      <p class="lead">Điền thông tin để vào hàng chờ chụp ảnh.</p>
+
+      <form id="checkin-form" class="panel">
+        <p id="error" class="error" hidden></p>
+
+        <label for="name">Họ và tên</label>
+        <input id="name" name="name" type="text" autocomplete="name" required maxlength="80" />
+
+        <label for="phone">Số điện thoại</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" required maxlength="20" />
+
+        <label class="consent">
+          <input id="consent" name="consent" type="checkbox" required />
+          <span>Tôi đồng ý với điều khoản sử dụng hình ảnh của Face Wash Fox.</span>
+        </label>
+
+        <button class="btn" type="submit" id="submit">CHECK-IN</button>
+      </form>
+    </main>
+    <script src="/assets/checkin.js" type="module"></script>
+  </body>
+</html>

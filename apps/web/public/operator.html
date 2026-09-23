@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>FWF Operator</title>
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <div class="top-links">
+        <a href="/display">Display</a>
+        <a href="/checkin">Check-in</a>
+      </div>
+
+      <p class="brand">FACE WASH FOX</p>
+      <h1>PHOTO BOOTH OPERATOR</h1>
+      <p class="lead">Chọn khách trước khi chụp. Ảnh mới sẽ gắn đúng active session.</p>
+
+      <section id="active" class="active-banner" hidden></section>
+
+      <section class="panel">
+        <h2 style="font-size: 1rem; letter-spacing: 0.08em; margin-bottom: 1rem; color: var(--fwf-amber)">
+          WAITING QUEUE
+        </h2>
+        <div id="queue" class="queue"></div>
+        <p id="empty" class="empty" hidden>Chưa có khách check-in.</p>
+      </section>
+
+      <section class="panel" style="margin-top: 1rem">
+        <h2 style="font-size: 1rem; letter-spacing: 0.08em; margin-bottom: 1rem; color: var(--fwf-amber)">
+          RECENT / OTHER
+        </h2>
+        <div id="recent" class="queue"></div>
+      </section>
+    </main>
+    <script src="/assets/operator.js" type="module"></script>
+  </body>
+</html>
