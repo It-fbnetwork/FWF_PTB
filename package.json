@@ -1,0 +1,26 @@
+{
+  "name": "fwf-photo-booth",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Face Wash Fox Photo Booth — local camera agent + LED display",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "process": "tsx src/index.ts --once",
+    "generate-frame": "tsx src/generate-frame.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "chokidar": "^5.0.0",
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  }
+}

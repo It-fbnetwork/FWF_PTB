@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>FWF Session</title>
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body>
+    <main class="shell shell--narrow">
+      <div class="top-links">
+        <a href="/checkin" id="back-link">← Quay lại check-in</a>
+      </div>
+
+      <p class="brand">FACE WASH FOX</p>
+      <h1 id="title">CHECK-IN THÀNH CÔNG</h1>
+      <p class="lead" id="lead">Bước tiếp theo: đến khu vực chụp ảnh.</p>
+
+      <section id="next-step" class="notice" aria-live="polite">
+        <p class="notice__eyebrow">BƯỚC TIẾP THEO</p>
+        <p class="notice__title">Đến khu vực chụp ảnh</p>
+        <ol class="notice__steps">
+          <li>Giữ màn hình này.</li>
+          <li>Đến booth Face Wash Fox.</li>
+          <li>Nhân viên sẽ gọi tên bạn để chụp.</li>
+        </ol>
+      </section>
+
+      <section class="panel">
+        <p class="queue-sub">Họ và tên</p>
+        <p class="guest-name" id="name">—</p>
+
+        <p class="queue-sub" style="margin-top: 1rem">Số điện thoại</p>
+        <p class="guest-phone" id="phone">—</p>
+
+        <p style="margin-top: 1rem"><span class="status-pill" id="status">WAITING</span></p>
+
+        <div class="photo-slot" id="photo-slot">
+          <div class="photo-placeholder" id="photo-placeholder">
+            <p class="photo-placeholder__text">Ảnh của bạn sẽ xuất hiện tại đây nhé</p>
+          </div>
+          <img id="photo" class="photo-preview" alt="Ảnh Face Wash Fox của bạn" hidden />
+        </div>
+
+        <div class="btn-row" style="margin-top: 1rem" id="actions" hidden>
+          <a class="btn" id="download" href="#" download>DOWNLOAD</a>
+        </div>
+      </section>
+    </main>
+    <script src="/assets/session.js" type="module"></script>
+  </body>
+</html>

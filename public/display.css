@@ -1,0 +1,150 @@
+:root {
+  --fwf-ink: #1a120b;
+  --fwf-cream: #fff8f0;
+  --fwf-orange: #e85d04;
+  --fwf-amber: #f4a261;
+  --fade-ms: 700ms;
+  /* LED column content area from blueprint */
+  --led-w: 960;
+  --led-h: 1280;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0705;
+  color: var(--fwf-cream);
+  cursor: default;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html:fullscreen,
+html:fullscreen body {
+  cursor: none;
+}
+
+html:-webkit-full-screen,
+html:-webkit-full-screen body {
+  cursor: none;
+}
+
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0a0705;
+}
+
+/* Portrait LED panel: fill viewport while keeping 960:1280 */
+.panel {
+  position: relative;
+  width: min(100vw, calc(100vh * 960 / 1280));
+  height: min(100vh, calc(100vw * 1280 / 960));
+  overflow: hidden;
+  background: var(--fwf-ink);
+}
+
+.idle,
+.photo {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--fade-ms) ease;
+  pointer-events: none;
+}
+
+.idle.is-visible,
+.photo.is-visible {
+  opacity: 1;
+}
+
+.idle {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(ellipse 80% 45% at 50% 30%, rgba(232, 93, 4, 0.24), transparent 70%),
+    linear-gradient(180deg, #2a1a12 0%, #1a120b 48%, #0f0a07 100%);
+}
+
+.idle__glow {
+  position: absolute;
+  width: 70%;
+  height: 35%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(244, 162, 97, 0.18), transparent 70%);
+  filter: blur(12px);
+  animation: breathe 5.5s ease-in-out infinite;
+}
+
+.idle__frame {
+  position: relative;
+  text-align: center;
+  padding: 8% 6%;
+}
+
+.idle__eyebrow {
+  letter-spacing: 0.28em;
+  font-size: clamp(0.7rem, 2.4cqi, 1rem);
+  font-weight: 600;
+  color: var(--fwf-amber);
+  margin-bottom: 0.85rem;
+}
+
+.idle__title {
+  font-size: clamp(2rem, 10cqi, 4.2rem);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.05;
+  color: var(--fwf-cream);
+}
+
+.idle__hint {
+  margin-top: 1.2rem;
+  font-size: clamp(0.85rem, 3cqi, 1.15rem);
+  letter-spacing: 0.06em;
+  color: rgba(255, 248, 240, 0.62);
+}
+
+.photo {
+  background: #000;
+}
+
+.photo__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  background: #000;
+  display: block;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idle,
+  .photo,
+  .idle__glow {
+    transition: none;
+    animation: none;
+  }
+}
