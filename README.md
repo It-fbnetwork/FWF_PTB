@@ -1,52 +1,55 @@
 # FWF Photo Booth — Phase 4 (Cloud)
 
-Cloud **check-in / operator / LED / download** on Vercel + Supabase.  
+Cloud **check-in / operator / LED / download** on Vercel.  
+**Postgres** on Railway + **photo files** on Cloudflare R2.  
 Local **camera agent** on any store Mac with Sony Imaging Edge + ZV-E10.
 
 ```text
 Guest QR → Vercel /checkin
               ↓
-         Supabase DB + Storage
+     Railway Postgres + R2
               ↑
 Store Mac agent (watch Pictures → frame → upload)
 ```
 
-Your personal Mac does **not** need to stay on for QR/check-in.  
-A store machine only needs to run the agent **while the booth is open**.
-
 ## Repo layout
 
 ```text
-apps/web/       Next.js app (deploy to Vercel)
-apps/agent/     Camera agent (run on store Mac)
-supabase/       SQL schema
+apps/web/       Next.js (deploy Vercel)
+apps/agent/     Camera agent (store Mac)
+db/schema.sql   Railway Postgres schema
 ```
 
-Legacy `src/` + root `public/` are the old Phase 3 local-only stack.
+## 1. Railway Postgres
 
-## 1. Supabase
+1. Create a Railway project → add **PostgreSQL**.
+2. Copy `DATABASE_URL`.
+3. Open Query / `psql` and run [`db/schema.sql`](db/schema.sql).
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. SQL Editor → run [`supabase/schema.sql`](supabase/schema.sql).
-3. Storage → confirm bucket **`photos`** exists and is **public**.
-4. Project Settings → API: copy URL + `service_role` key (+ anon key).
+## 2. Cloudflare R2
 
-## 2. Vercel
+1. R2 → Create bucket (e.g. `fwf-photobooth`).
+2. Enable **public access** (R2.dev subdomain or custom domain).
+3. Create API token: Object Read & Write for that bucket.
+4. Note: Account ID, Access Key ID, Secret, public base URL  
+   (e.g. `https://pub-xxxxx.r2.dev` or `https://photos.yourdomain.com`).
+
+## 3. Vercel
 
 1. Project linked to [It-fbnetwork/FWF_PTB](https://github.com/It-fbnetwork/FWF_PTB).
-2. **Root Directory** = `apps/web` (Settings → General).
+2. **Root Directory** = `apps/web`.
 3. Environment variables:
 
 | Name | Value |
 | --- | --- |
-| `SUPABASE_URL` | from Supabase |
-| `NEXT_PUBLIC_SUPABASE_URL` | same URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | service_role |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon |
+| `DATABASE_URL` | Railway Postgres URL |
+| `R2_ACCOUNT_ID` | Cloudflare account id |
+| `R2_ACCESS_KEY_ID` | R2 access key |
+| `R2_SECRET_ACCESS_KEY` | R2 secret |
+| `R2_BUCKET` | bucket name |
+| `R2_PUBLIC_BASE_URL` | public base (no trailing slash) |
 | `OPERATOR_PIN` | e.g. `4821` |
 | `AGENT_TOKEN` | long random secret |
-| `DISPLAY_DURATION_MS` | `8000` (optional) |
-| `DISPLAY_FADE_MS` | `700` (optional) |
 
 4. Redeploy.
 
@@ -56,55 +59,35 @@ Public URLs (QR):
 | --- | --- |
 | Check-in (QR) | `/checkin` |
 | Guest session | `/checkin/CODE` |
-| Operator | `/operator` (asks for PIN) |
+| Operator | `/operator` (PIN) |
 | LED | `/display` |
 
-## 3. Store Mac (any machine)
-
-1. Install Sony Imaging Edge; tether ZV-E10; confirm JPEGs land in Pictures (or your folder).
-2. Clone repo and install:
+## 4. Store Mac
 
 ```bash
 git clone https://github.com/It-fbnetwork/FWF_PTB.git
-cd FWF_PTB
-npm install
-```
+cd FWF_PTB && npm install
 
-3. Create `apps/agent/.env` (or export vars):
-
-```bash
 export FWF_API_URL=https://YOUR_VERCEL_URL
-export FWF_AGENT_TOKEN=same-as-AGENT_TOKEN-on-vercel
+export FWF_AGENT_TOKEN=same-as-AGENT_TOKEN
 export FWF_WATCH_DIR="$HOME/Pictures"
 export FWF_DATA_DIR="$HOME/FWF_PhotoBooth"
-```
 
-4. Start agent:
-
-```bash
 npm run agent
 ```
 
-5. Staff opens cloud `/operator` + PIN. LED browser opens cloud `/display`.  
-6. Print QR → `https://YOUR_VERCEL_URL/checkin`.
+Staff: cloud `/operator` + PIN. LED: cloud `/display`.  
+QR: `https://YOUR_VERCEL_URL/checkin`.
 
 ## Local web dev
 
 ```bash
 cp .env.example apps/web/.env.local
-# fill Supabase + PIN + token
+# fill DATABASE_URL + R2_* + PIN + token
 npm install
 npm run dev
 ```
 
-## Verify checklist
+## Verify
 
-1. Open `/checkin` on phone (any network) → submit → get code page.
-2. `/operator` + PIN → see session → PREPARE PHOTO.
-3. Agent terminal shows active session when polled after prepare.
-4. Shoot ZV-E10 → agent processes + uploads.
-5. Guest page shows photo + download; `/display` shows framed image.
-
-## Env reference
-
-See [`.env.example`](.env.example).
+See [`docs/VERIFY.md`](docs/VERIFY.md).

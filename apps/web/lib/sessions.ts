@@ -1,9 +1,9 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { getAdminClient } from "./supabase";
+import { query, queryOne } from "./db";
+import { uploadPhotoObject } from "./r2";
 import type { PhotoSession, SessionPhoto, SessionStatus, UnassignedPhoto } from "./types";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const PHOTO_BUCKET = "photos";
 
 type SessionRow = {
   id: string;
@@ -41,13 +41,37 @@ function generateCode(): string {
   return code;
 }
 
-function mapPhoto(row: PhotoRow): SessionPhoto {
+function iso(value: Date | string | null | undefined): string | null {
+  if (!value) return null;
+  if (typeof value === "string") return value;
+  return value.toISOString();
+}
+
+function normalizeSessionRow(row: SessionRow): SessionRow {
   return {
-    id: row.id,
-    originalFilename: row.original_filename,
-    processedFilename: row.processed_filename,
-    url: row.public_url,
-    createdAt: row.created_at,
+    ...row,
+    consent_at: iso(row.consent_at)!,
+    created_at: iso(row.created_at)!,
+    captured_at: iso(row.captured_at),
+    completed_at: iso(row.completed_at),
+  };
+}
+
+function normalizePhotoRow(row: PhotoRow): PhotoRow {
+  return {
+    ...row,
+    created_at: iso(row.created_at)!,
+  };
+}
+
+function mapPhoto(row: PhotoRow): SessionPhoto {
+  const n = normalizePhotoRow(row);
+  return {
+    id: n.id,
+    originalFilename: n.original_filename,
+    processedFilename: n.processed_filename,
+    url: n.public_url,
+    createdAt: n.created_at,
   };
 }
 
@@ -55,16 +79,14 @@ async function loadPhotosForSessions(sessionIds: string[]): Promise<Map<string, 
   const map = new Map<string, SessionPhoto[]>();
   if (sessionIds.length === 0) return map;
 
-  const db = getAdminClient();
-  const { data, error } = await db
-    .from("photos")
-    .select("*")
-    .in("session_id", sessionIds)
-    .order("created_at", { ascending: true });
+  const rows = await query<PhotoRow>(
+    `select * from photos
+     where session_id = any($1::uuid[])
+     order by created_at asc`,
+    [sessionIds],
+  );
 
-  if (error) throw new Error(error.message);
-
-  for (const row of (data ?? []) as PhotoRow[]) {
+  for (const row of rows) {
     if (!row.session_id) continue;
     const list = map.get(row.session_id) ?? [];
     list.push(mapPhoto(row));
@@ -74,65 +96,64 @@ async function loadPhotosForSessions(sessionIds: string[]): Promise<Map<string, 
 }
 
 async function mapSession(row: SessionRow, photos?: SessionPhoto[]): Promise<PhotoSession> {
+  const n = normalizeSessionRow(row);
   let sessionPhotos = photos;
   if (!sessionPhotos) {
-    const loaded = await loadPhotosForSessions([row.id]);
-    sessionPhotos = loaded.get(row.id) ?? [];
+    const loaded = await loadPhotosForSessions([n.id]);
+    sessionPhotos = loaded.get(n.id) ?? [];
   }
   return {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    phone: row.phone,
-    status: row.status,
-    consentAt: row.consent_at,
-    createdAt: row.created_at,
-    capturedAt: row.captured_at,
-    completedAt: row.completed_at,
-    selectedPhotoId: row.selected_photo_id,
+    id: n.id,
+    code: n.code,
+    name: n.name,
+    phone: n.phone,
+    status: n.status,
+    consentAt: n.consent_at,
+    createdAt: n.created_at,
+    capturedAt: n.captured_at,
+    completedAt: n.completed_at,
+    selectedPhotoId: n.selected_photo_id,
     photos: sessionPhotos,
   };
 }
 
 async function getActiveSessionId(): Promise<string | null> {
-  const db = getAdminClient();
-  const { data, error } = await db.from("booth_state").select("active_session_id").eq("id", 1).maybeSingle();
-  if (error) throw new Error(error.message);
-  return (data?.active_session_id as string | null | undefined) ?? null;
+  const row = await queryOne<{ active_session_id: string | null }>(
+    `select active_session_id from booth_state where id = 1`,
+  );
+  return row?.active_session_id ?? null;
 }
 
 async function setActiveSessionId(sessionId: string | null): Promise<void> {
-  const db = getAdminClient();
-  const { error } = await db
-    .from("booth_state")
-    .upsert({ id: 1, active_session_id: sessionId, updated_at: new Date().toISOString() });
-  if (error) throw new Error(error.message);
+  await query(
+    `insert into booth_state (id, active_session_id, updated_at)
+     values (1, $1, now())
+     on conflict (id) do update
+       set active_session_id = excluded.active_session_id,
+           updated_at = excluded.updated_at`,
+    [sessionId],
+  );
 }
 
 export async function listSessions(): Promise<PhotoSession[]> {
-  const db = getAdminClient();
-  const { data, error } = await db.from("sessions").select("*").order("created_at", { ascending: false }).limit(100);
-  if (error) throw new Error(error.message);
-  const rows = (data ?? []) as SessionRow[];
+  const rows = await query<SessionRow>(
+    `select * from sessions order by created_at desc limit 100`,
+  );
   const photos = await loadPhotosForSessions(rows.map((r) => r.id));
   return Promise.all(rows.map((row) => mapSession(row, photos.get(row.id) ?? [])));
 }
 
 export async function getSessionById(id: string): Promise<PhotoSession | null> {
-  const db = getAdminClient();
-  const { data, error } = await db.from("sessions").select("*").eq("id", id).maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-  return mapSession(data as SessionRow);
+  const row = await queryOne<SessionRow>(`select * from sessions where id = $1`, [id]);
+  if (!row) return null;
+  return mapSession(row);
 }
 
 export async function getSessionByCode(code: string): Promise<PhotoSession | null> {
-  const db = getAdminClient();
   const needle = code.trim().toUpperCase();
-  const { data, error } = await db.from("sessions").select("*").eq("code", needle).maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) return null;
-  return mapSession(data as SessionRow);
+  const row = await queryOne<SessionRow>(`select * from sessions where code = $1`, [needle]);
+  if (!row) return null;
+  return mapSession(row);
 }
 
 export async function getActiveSession(): Promise<PhotoSession | null> {
@@ -142,21 +163,22 @@ export async function getActiveSession(): Promise<PhotoSession | null> {
 }
 
 export async function getUnassignedPhotos(): Promise<UnassignedPhoto[]> {
-  const db = getAdminClient();
-  const { data, error } = await db
-    .from("photos")
-    .select("*")
-    .is("session_id", null)
-    .order("created_at", { ascending: false })
-    .limit(50);
-  if (error) throw new Error(error.message);
-  return ((data ?? []) as PhotoRow[]).map((row) => ({
-    id: row.id,
-    originalFilename: row.original_filename,
-    processedFilename: row.processed_filename,
-    url: row.public_url,
-    createdAt: row.created_at,
-  }));
+  const rows = await query<PhotoRow>(
+    `select * from photos
+     where session_id is null
+     order by created_at desc
+     limit 50`,
+  );
+  return rows.map((row) => {
+    const photo = mapPhoto(row);
+    return {
+      id: photo.id,
+      originalFilename: photo.originalFilename,
+      processedFilename: photo.processedFilename,
+      url: photo.url,
+      createdAt: photo.createdAt,
+    };
+  });
 }
 
 export async function createSession(input: {
@@ -170,47 +192,41 @@ export async function createSession(input: {
   if (phone.length < 8) throw new Error("Phone number is invalid");
   if (!input.consent) throw new Error("Consent is required");
 
-  const db = getAdminClient();
   const now = new Date().toISOString();
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < 8; attempt += 1) {
+    const id = randomUUID();
     const code = generateCode();
-    const { data, error } = await db
-      .from("sessions")
-      .insert({
-        id: randomUUID(),
-        code,
-        name,
-        phone,
-        status: "READY",
-        consent_at: now,
-        created_at: now,
-      })
-      .select("*")
-      .single();
+    try {
+      const row = await queryOne<SessionRow>(
+        `insert into sessions
+           (id, code, name, phone, status, consent_at, created_at)
+         values ($1, $2, $3, $4, 'READY', $5, $5)
+         returning *`,
+        [id, code, name, phone, now],
+      );
+      if (!row) throw new Error("Insert session failed");
 
-    if (error) {
-      lastError = new Error(error.message);
-      if (error.code === "23505") continue;
-      throw lastError;
-    }
+      const session = await mapSession(row, []);
+      const previous = await getActiveSession();
+      if (previous && previous.id !== session.id) {
+        if (previous.status === "READY" || previous.status === "SELECTED") {
+          await query(`update sessions set status = $2 where id = $1`, [
+            previous.id,
+            previous.photos.length > 0 ? "READY_TO_DISPLAY" : "WAITING",
+          ]);
+        }
+      }
 
-    const session = await mapSession(data as SessionRow, []);
-    const previous = await getActiveSession();
-    if (previous && previous.id !== session.id) {
-      if (previous.status === "READY" || previous.status === "SELECTED") {
-        await db
-          .from("sessions")
-          .update({
-            status: previous.photos.length > 0 ? "READY_TO_DISPLAY" : "WAITING",
-          })
-          .eq("id", previous.id);
+      await setActiveSessionId(session.id);
+      return session;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (!lastError.message.includes("sessions_code_key") && !lastError.message.includes("unique")) {
+        throw lastError;
       }
     }
-
-    await setActiveSessionId(session.id);
-    return session;
   }
 
   throw lastError ?? new Error("Could not generate unique session code");
@@ -223,21 +239,17 @@ export async function prepareSession(sessionId: string): Promise<PhotoSession> {
     throw new Error(`Cannot prepare session in status ${session.status}`);
   }
 
-  const db = getAdminClient();
   const previous = await getActiveSession();
   if (previous && previous.id !== session.id) {
     if (previous.status === "READY" || previous.status === "SELECTED") {
-      await db
-        .from("sessions")
-        .update({
-          status: previous.photos.length > 0 ? "READY_TO_DISPLAY" : "WAITING",
-        })
-        .eq("id", previous.id);
+      await query(`update sessions set status = $2 where id = $1`, [
+        previous.id,
+        previous.photos.length > 0 ? "READY_TO_DISPLAY" : "WAITING",
+      ]);
     }
   }
 
-  const { error } = await db.from("sessions").update({ status: "READY" }).eq("id", session.id);
-  if (error) throw new Error(error.message);
+  await query(`update sessions set status = 'READY' where id = $1`, [session.id]);
   await setActiveSessionId(session.id);
   return (await getSessionById(session.id))!;
 }
@@ -246,13 +258,11 @@ export async function completeSession(sessionId: string): Promise<PhotoSession> 
   const session = await getSessionById(sessionId);
   if (!session) throw new Error("Session not found");
 
-  const db = getAdminClient();
   const now = new Date().toISOString();
-  const { error } = await db
-    .from("sessions")
-    .update({ status: "COMPLETED", completed_at: now })
-    .eq("id", session.id);
-  if (error) throw new Error(error.message);
+  await query(`update sessions set status = 'COMPLETED', completed_at = $2 where id = $1`, [
+    session.id,
+    now,
+  ]);
 
   const activeId = await getActiveSessionId();
   if (activeId === session.id) await setActiveSessionId(null);
@@ -263,9 +273,7 @@ export async function cancelSession(sessionId: string): Promise<PhotoSession> {
   const session = await getSessionById(sessionId);
   if (!session) throw new Error("Session not found");
 
-  const db = getAdminClient();
-  const { error } = await db.from("sessions").update({ status: "CANCELLED" }).eq("id", session.id);
-  if (error) throw new Error(error.message);
+  await query(`update sessions set status = 'CANCELLED' where id = $1`, [session.id]);
 
   const activeId = await getActiveSessionId();
   if (activeId === session.id) await setActiveSessionId(null);
@@ -299,37 +307,34 @@ export async function attachUploadedPhoto(input: {
     createdAt: string;
   };
 }> {
-  const db = getAdminClient();
   const photoId = randomUUID();
   const storagePath = `${new Date().toISOString().slice(0, 10)}/${photoId}_${input.processedFilename}`;
-
-  const { error: uploadError } = await db.storage.from(PHOTO_BUCKET).upload(storagePath, input.bytes, {
+  const uploaded = await uploadPhotoObject({
+    key: storagePath,
+    bytes: input.bytes,
     contentType: input.contentType ?? "image/jpeg",
-    upsert: false,
   });
-  if (uploadError) throw new Error(uploadError.message);
 
-  const { data: publicData } = db.storage.from(PHOTO_BUCKET).getPublicUrl(storagePath);
-  const publicUrl = publicData.publicUrl;
   const now = new Date().toISOString();
   const active = await getActiveSession();
 
-  const { data: photoRow, error: photoError } = await db
-    .from("photos")
-    .insert({
-      id: photoId,
-      session_id: active?.id ?? null,
-      original_filename: input.originalFilename,
-      processed_filename: input.processedFilename,
-      storage_path: storagePath,
-      public_url: publicUrl,
-      created_at: now,
-    })
-    .select("*")
-    .single();
-
-  if (photoError) throw new Error(photoError.message);
-  const photo = mapPhoto(photoRow as PhotoRow);
+  const photoRow = await queryOne<PhotoRow>(
+    `insert into photos
+       (id, session_id, original_filename, processed_filename, storage_path, public_url, created_at)
+     values ($1, $2, $3, $4, $5, $6, $7)
+     returning *`,
+    [
+      photoId,
+      active?.id ?? null,
+      input.originalFilename,
+      input.processedFilename,
+      uploaded.key,
+      uploaded.publicUrl,
+      now,
+    ],
+  );
+  if (!photoRow) throw new Error("Insert photo failed");
+  const photo = mapPhoto(photoRow);
 
   if (!active) {
     return {
@@ -346,16 +351,14 @@ export async function attachUploadedPhoto(input: {
     };
   }
 
-  const { error: updateError } = await db
-    .from("sessions")
-    .update({
-      status: "READY_TO_DISPLAY",
-      selected_photo_id: photo.id,
-      captured_at: active.capturedAt ?? now,
-    })
-    .eq("id", active.id);
-  if (updateError) throw new Error(updateError.message);
-
+  await query(
+    `update sessions
+     set status = 'READY_TO_DISPLAY',
+         selected_photo_id = $2,
+         captured_at = coalesce(captured_at, $3)
+     where id = $1`,
+    [active.id, photo.id, now],
+  );
   await setActiveSessionId(null);
   const updated = await getSessionById(active.id);
 
@@ -382,21 +385,19 @@ export async function listRecentPhotosSince(sinceIso: string): Promise<
     createdAt: string;
   }>
 > {
-  const db = getAdminClient();
-  const { data, error } = await db
-    .from("photos")
-    .select("processed_filename, public_url, created_at, session_id")
-    .gt("created_at", sinceIso)
-    .order("created_at", { ascending: true })
-    .limit(50);
-  if (error) throw new Error(error.message);
-
-  const rows = (data ?? []) as Array<{
+  const rows = await query<{
     processed_filename: string;
     public_url: string;
-    created_at: string;
+    created_at: string | Date;
     session_id: string | null;
-  }>;
+  }>(
+    `select processed_filename, public_url, created_at, session_id
+     from photos
+     where created_at > $1::timestamptz
+     order by created_at asc
+     limit 50`,
+    [sinceIso],
+  );
 
   const sessionIds = [...new Set(rows.map((r) => r.session_id).filter(Boolean))] as string[];
   const sessionMap = new Map<string, PhotoSession>();
@@ -414,7 +415,7 @@ export async function listRecentPhotosSince(sinceIso: string): Promise<
       url: row.public_url,
       sessionCode: session?.code ?? null,
       sessionName: session?.name ?? null,
-      createdAt: row.created_at,
+      createdAt: iso(row.created_at)!,
     };
   });
 }

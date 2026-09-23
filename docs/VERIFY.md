@@ -1,11 +1,11 @@
-# Phase 4 verify checklist
+# Phase 4 verify checklist (Railway + R2)
 
-- [ ] Supabase schema applied (`supabase/schema.sql`)
-- [ ] Bucket `photos` is public
+- [ ] Railway Postgres created; `db/schema.sql` applied
+- [ ] R2 bucket public; `R2_PUBLIC_BASE_URL` works in browser
 - [ ] Vercel Root Directory = `apps/web`
-- [ ] Vercel env: SUPABASE_*, OPERATOR_PIN, AGENT_TOKEN
+- [ ] Vercel env: `DATABASE_URL`, `R2_*`, `OPERATOR_PIN`, `AGENT_TOKEN`
 - [ ] Redeploy succeeds
-- [ ] Phone opens `/checkin` over cellular → session code page
-- [ ] `/operator` accepts PIN and lists session
-- [ ] Store Mac: `npm run agent` connects and logs cloud API
+- [ ] Phone `/checkin` (cellular) → session page
+- [ ] `/operator` + PIN lists session
+- [ ] Store Mac `npm run agent` connects
 - [ ] PREPARE → shoot → guest page + `/display` show photo
