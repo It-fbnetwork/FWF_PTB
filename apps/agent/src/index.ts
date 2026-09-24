@@ -1,6 +1,6 @@
 import { access, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
-import { fetchActiveSession, pingCloud } from "./cloud.js";
+import { fetchActiveSession, pingCloud, type ActiveSession } from "./cloud.js";
 import { config } from "./config.js";
 import { ensureLocalFolders } from "./ensure-dirs.js";
 import { ensureDefaultFrame } from "./ensure-frame.js";
@@ -21,11 +21,12 @@ function formatBytes(bytes: number): string {
 
 async function handleNewPhoto(filePath: string): Promise<boolean> {
   const name = basename(filePath);
+  let active: ActiveSession = null;
   log.blank();
   log.info(`New photo detected:\n${name}`);
 
   try {
-    const active = await fetchActiveSession();
+    active = await fetchActiveSession();
     if (active) {
       log.info(`Active session: ${active.code} — ${active.name}`);
     } else {
@@ -49,7 +50,7 @@ async function handleNewPhoto(filePath: string): Promise<boolean> {
     return false;
   }
 
-  const result = await processPhotoSafely(filePath);
+  const result = await processPhotoSafely(filePath, active?.selectedFrameId);
   if (!result) return true;
 
   // Local LED first (works offline).

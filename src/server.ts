@@ -13,6 +13,7 @@ import {
   getOperatorSnapshot,
   getSessionByCode,
   prepareSession,
+  updateSessionFrameByCode,
 } from "./sessions.js";
 
 const publicDir = resolve(fileURLToPath(new URL("../public", import.meta.url)));
@@ -155,6 +156,20 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, path: string
       return true;
     }
     sendJson(res, 200, { session });
+    return true;
+  }
+
+  if (req.method === "PATCH" && sessionByCode) {
+    try {
+      const body = await readJsonBody<{ selectedFrameId?: string }>(req);
+      const session = updateSessionFrameByCode(
+        decodeURIComponent(sessionByCode[1]!),
+        body.selectedFrameId,
+      );
+      sendJson(res, 200, { session });
+    } catch (error) {
+      sendJson(res, 400, { error: error instanceof Error ? error.message : String(error) });
+    }
     return true;
   }
 

@@ -15,11 +15,17 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { name?: string; phone?: string; consent?: boolean };
+    const body = (await req.json()) as {
+      name?: string;
+      phone?: string;
+      consent?: boolean;
+      selectedFrameId?: string;
+    };
     const session = await createSession({
       name: body.name ?? "",
       phone: body.phone ?? "",
       consent: Boolean(body.consent),
+      selectedFrameId: body.selectedFrameId,
     });
     return json({ session }, 201);
   } catch (error) {

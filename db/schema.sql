@@ -23,8 +23,12 @@ create table if not exists sessions (
   created_at timestamptz not null default now(),
   captured_at timestamptz null,
   completed_at timestamptz null,
-  selected_photo_id uuid null
+  selected_photo_id uuid null,
+  selected_frame_id text not null default 'frame-1'
 );
+
+alter table sessions
+  add column if not exists selected_frame_id text not null default 'frame-1';
 
 create index if not exists sessions_created_at_idx on sessions (created_at desc);
 create index if not exists sessions_status_idx on sessions (status);
@@ -41,3 +45,11 @@ create table if not exists photos (
 
 create index if not exists photos_session_id_idx on photos (session_id);
 create index if not exists photos_created_at_idx on photos (created_at desc);
+
+create table if not exists frame_preview_events (
+  id uuid primary key default gen_random_uuid(),
+  frame_id text not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists frame_preview_events_created_at_idx on frame_preview_events (created_at desc);

@@ -1,8 +1,11 @@
-import { access, writeFile } from "node:fs/promises";
+import { access, copyFile, mkdir, writeFile } from "node:fs/promises";
 import { constants } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 import { config } from "./config.js";
 import { generateDefaultFramePng } from "./default-frame.js";
+import { frameOptions } from "./frames.js";
 import { log } from "./logger.js";
 
 async function exists(path: string): Promise<boolean> {
@@ -24,6 +27,17 @@ async function frameMatchesOutputSize(path: string): Promise<boolean> {
 }
 
 export async function ensureDefaultFrame(): Promise<boolean> {
+  await mkdir(config.framesDir, { recursive: true });
+
+  const publicDir = fileURLToPath(new URL("../public", import.meta.url));
+  for (const frameId of frameOptions) {
+    const source = join(publicDir, "frames", `${frameId}.png`);
+    const target = join(config.framesDir, `${frameId}.png`);
+    if (await exists(source)) {
+      await copyFile(source, target);
+    }
+  }
+
   const hasFrame = await exists(config.framePath);
   const sizeOk = hasFrame ? await frameMatchesOutputSize(config.framePath) : false;
 

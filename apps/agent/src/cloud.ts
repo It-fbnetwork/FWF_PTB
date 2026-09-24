@@ -8,6 +8,7 @@ export type ActiveSession = {
   code: string;
   name: string;
   status: string;
+  selectedFrameId?: string | null;
 } | null;
 
 async function agentFetch(path: string, init: RequestInit = {}): Promise<Response> {

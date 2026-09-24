@@ -4,8 +4,16 @@
 const idleEl = document.getElementById("idle");
 const photoEl = document.getElementById("photo");
 const imageEl = document.getElementById("photo-image");
+const framePreviewEl = document.getElementById("frame-preview");
+const framePreviewImageEl = document.getElementById("frame-preview-image");
 
-if (!(idleEl instanceof HTMLElement) || !(photoEl instanceof HTMLElement) || !(imageEl instanceof HTMLImageElement)) {
+if (
+  !(idleEl instanceof HTMLElement) ||
+  !(photoEl instanceof HTMLElement) ||
+  !(imageEl instanceof HTMLImageElement) ||
+  !(framePreviewEl instanceof HTMLElement) ||
+  !(framePreviewImageEl instanceof HTMLImageElement)
+) {
   throw new Error("Display DOM is incomplete");
 }
 
@@ -32,8 +40,10 @@ function preload(url) {
 
 async function fadeToIdle() {
   photoEl.classList.remove("is-visible");
+  framePreviewEl.classList.remove("is-visible");
   await sleep(fadeMs);
   photoEl.hidden = true;
+  framePreviewEl.hidden = true;
   imageEl.removeAttribute("src");
   idleEl.hidden = false;
   idleEl.classList.add("is-visible");
@@ -48,10 +58,27 @@ async function showPhoto(url) {
   await preload(url);
   imageEl.src = url;
   photoEl.hidden = false;
+  framePreviewEl.classList.remove("is-visible");
   idleEl.classList.remove("is-visible");
   void photoEl.offsetWidth;
   photoEl.classList.add("is-visible");
   await sleep(fadeMs);
+}
+
+async function showFramePreview(frameUrl) {
+  if (busy) return;
+  await preload(frameUrl);
+  framePreviewImageEl.src = frameUrl;
+  framePreviewEl.hidden = false;
+  photoEl.classList.remove("is-visible");
+  idleEl.classList.remove("is-visible");
+  void framePreviewEl.offsetWidth;
+  framePreviewEl.classList.add("is-visible");
+}
+
+async function clearFramePreview() {
+  if (busy || framePreviewEl.hidden) return;
+  await fadeToIdle();
 }
 
 async function drainQueue() {
@@ -105,6 +132,11 @@ async function pollPhotos() {
     const res = await fetch(`/api/events/poll?since=${encodeURIComponent(since)}`);
     if (!res.ok) return;
     const data = await res.json();
+    for (const event of data.framePreviews ?? []) {
+      if (event?.type === "frame_preview_clear") await clearFramePreview();
+      else if (event?.frameUrl) await showFramePreview(event.frameUrl);
+      if (event?.createdAt && event.createdAt > since) since = event.createdAt;
+    }
     for (const event of data.photos ?? []) {
       if (event?.url) enqueue(event);
       if (event?.createdAt && event.createdAt > since) since = event.createdAt;

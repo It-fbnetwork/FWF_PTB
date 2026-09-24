@@ -24,11 +24,17 @@ form.addEventListener("submit", async (event) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const json = await res.json();
+    const text = await res.text();
+    const json = text ? JSON.parse(text) : {};
     if (!res.ok) throw new Error(json.error || "Check-in failed");
     window.location.href = `/checkin/${json.session.code}`;
   } catch (error) {
-    errorEl.textContent = error instanceof Error ? error.message : String(error);
+    const message = error instanceof SyntaxError
+      ? "Server đang trả HTML thay vì JSON. Vui lòng restart server rồi thử lại."
+      : error instanceof Error
+        ? error.message
+        : String(error);
+    errorEl.textContent = message;
     errorEl.hidden = false;
     submitBtn.disabled = false;
   }

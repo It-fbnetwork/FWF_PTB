@@ -4,9 +4,9 @@
   --fwf-orange: #e85d04;
   --fwf-amber: #f4a261;
   --fade-ms: 700ms;
-  /* Portrait LED panel — 9:16 */
+  /* Portrait LED panel — 8:16 */
   --led-w: 1080;
-  --led-h: 1920;
+  --led-h: 2160;
 }
 
 * {
@@ -45,17 +45,18 @@ html:-webkit-full-screen body {
   background: #0a0705;
 }
 
-/* Portrait LED panel: fill viewport while keeping 9:16 */
+/* Portrait LED panel: fill viewport while keeping 8:16 */
 .panel {
   position: relative;
-  width: min(100vw, calc(100vh * 9 / 16));
-  height: min(100vh, calc(100vw * 16 / 9));
+  width: min(100vw, calc(100vh * 8 / 16));
+  height: min(100vh, calc(100vw * 16 / 8));
   overflow: hidden;
   background: var(--fwf-ink);
 }
 
 .idle,
-.photo {
+.photo,
+.frame-preview {
   position: absolute;
   inset: 0;
   opacity: 0;
@@ -64,7 +65,8 @@ html:-webkit-full-screen body {
 }
 
 .idle.is-visible,
-.photo.is-visible {
+.photo.is-visible,
+.frame-preview.is-visible {
   opacity: 1;
 }
 
@@ -143,17 +145,36 @@ html:-webkit-full-screen body {
   color: rgba(255, 248, 240, 0.72);
 }
 
-.photo {
+.photo,
+.frame-preview {
   background: #000;
 }
 
-.photo__image {
+.photo__image,
+.frame-preview__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   object-position: center;
   background: #000;
   display: block;
+}
+
+.frame-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(20, 14, 10, 0.18), rgba(20, 14, 10, 0.44)),
+    url("/vincom/S5.jpg");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.58;
+}
+
+.frame-preview__image {
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes breathe {
@@ -171,6 +192,7 @@ html:-webkit-full-screen body {
 @media (prefers-reduced-motion: reduce) {
   .idle,
   .photo,
+  .frame-preview,
   .idle__glow,
   .idle__slide {
     transition: none;

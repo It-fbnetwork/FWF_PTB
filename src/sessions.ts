@@ -7,6 +7,7 @@ import { log } from "./logger.js";
 import type { PhotoSession, SessionPhoto, SessionStatus, UnassignedPhoto } from "./types.js";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const FRAME_OPTIONS = new Set(["frame-1", "frame-2", "frame-3", "frame-4", "frame-5"]);
 const storePath = join(config.dataDir, "sessions.json");
 
 type StoreShape = {
@@ -55,6 +56,10 @@ function normalizePhone(phone: string): string {
   return phone.replace(/[^\d+]/g, "").trim();
 }
 
+function normalizeFrameId(value: unknown): string {
+  return FRAME_OPTIONS.has(String(value)) ? String(value) : "frame-1";
+}
+
 function emitSession(type: string, session: PhotoSession): void {
   agentEvents.emitSessionEvent({ type, session });
 }
@@ -65,7 +70,12 @@ export async function loadSessions(): Promise<void> {
     const parsed = JSON.parse(raw) as Partial<StoreShape>;
     store = {
       activeSessionId: parsed.activeSessionId ?? null,
-      sessions: Array.isArray(parsed.sessions) ? parsed.sessions : [],
+      sessions: Array.isArray(parsed.sessions)
+        ? parsed.sessions.map((session) => ({
+            ...session,
+            selectedFrameId: normalizeFrameId((session as Partial<PhotoSession>).selectedFrameId),
+          }))
+        : [],
       unassigned: Array.isArray(parsed.unassigned) ? parsed.unassigned : [],
     };
     log.info(`Loaded ${store.sessions.length} session(s) from disk.`);
@@ -85,6 +95,15 @@ export function getSessionById(id: string): PhotoSession | undefined {
 export function getSessionByCode(code: string): PhotoSession | undefined {
   const needle = code.trim().toUpperCase();
   return store.sessions.find((s) => s.code === needle);
+}
+
+export function updateSessionFrameByCode(code: string, frameId: unknown): PhotoSession {
+  const session = getSessionByCode(code);
+  if (!session) throw new Error("Session not found");
+  session.selectedFrameId = normalizeFrameId(frameId);
+  schedulePersist();
+  emitSession("SESSION_UPDATED", session);
+  return session;
 }
 
 export function getActiveSession(): PhotoSession | null {
@@ -115,6 +134,7 @@ export function createSession(input: {
     name,
     phone,
     status: "WAITING",
+    selectedFrameId: "frame-1",
     consentAt: now,
     createdAt: now,
     capturedAt: null,

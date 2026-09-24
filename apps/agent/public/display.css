@@ -4,9 +4,9 @@
   --fwf-orange: #e85d04;
   --fwf-amber: #f4a261;
   --fade-ms: 700ms;
-  /* Portrait LED panel — 9:16 */
+  /* Portrait LED panel — 8:16 */
   --led-w: 1080;
-  --led-h: 1920;
+  --led-h: 2160;
 }
 
 * {
@@ -45,11 +45,11 @@ html:-webkit-full-screen body {
   background: #0a0705;
 }
 
-/* Portrait LED panel: fill viewport while keeping 9:16 */
+/* Portrait LED panel: fill viewport while keeping 8:16 */
 .panel {
   position: relative;
-  width: min(100vw, calc(100vh * 9 / 16));
-  height: min(100vh, calc(100vw * 16 / 9));
+  width: min(100vw, calc(100vh * 8 / 16));
+  height: min(100vh, calc(100vw * 16 / 8));
   overflow: hidden;
   background: var(--fwf-ink);
 }

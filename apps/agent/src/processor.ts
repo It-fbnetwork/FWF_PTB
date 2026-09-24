@@ -3,6 +3,7 @@ import { constants } from "node:fs";
 import { basename, extname, join } from "node:path";
 import sharp from "sharp";
 import { config } from "./config.js";
+import { framePathForId } from "./frames.js";
 import { log } from "./logger.js";
 
 async function fileExists(path: string): Promise<boolean> {
@@ -34,7 +35,7 @@ async function saveFailedCopy(inputPath: string): Promise<void> {
   }
 }
 
-export async function processPhoto(inputPath: string): Promise<ProcessResult> {
+export async function processPhoto(inputPath: string, frameId?: string | null): Promise<ProcessResult> {
   const outputPath = join(config.processedDir, outputName(inputPath));
   let frameApplied = false;
 
@@ -47,12 +48,15 @@ export async function processPhoto(inputPath: string): Promise<ProcessResult> {
     });
 
   let pipeline = photo;
-  const frameExists = await fileExists(config.framePath);
+  const selectedFramePath = framePathForId(frameId);
+  const framePath = (await fileExists(selectedFramePath)) ? selectedFramePath : config.framePath;
+  const frameExists = await fileExists(framePath);
 
   if (frameExists) {
-    const frameBuffer = await sharp(config.framePath)
+    const frameBuffer = await sharp(framePath)
       .resize(config.outputWidth, config.outputHeight, {
-        fit: "fill",
+        fit: "cover",
+        position: "centre",
       })
       .ensureAlpha()
       .png()
@@ -66,7 +70,7 @@ export async function processPhoto(inputPath: string): Promise<ProcessResult> {
     ]);
     frameApplied = true;
   } else {
-    log.warn(`Frame not found at ${config.framePath}. Processing without frame.`);
+    log.warn(`Frame not found at ${framePath}. Processing without frame.`);
   }
 
   await pipeline
@@ -79,10 +83,13 @@ export async function processPhoto(inputPath: string): Promise<ProcessResult> {
   return { outputPath, frameApplied };
 }
 
-export async function processPhotoSafely(inputPath: string): Promise<ProcessResult | null> {
+export async function processPhotoSafely(
+  inputPath: string,
+  frameId?: string | null,
+): Promise<ProcessResult | null> {
   try {
     log.info("Processing...");
-    const result = await processPhoto(inputPath);
+    const result = await processPhoto(inputPath, frameId);
     if (result.frameApplied) {
       log.success("Frame applied.");
     } else {

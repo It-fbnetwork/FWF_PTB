@@ -13,39 +13,47 @@
       </div>
 
       <p class="brand">FACE WASH FOX</p>
-      <h1 id="title" class="title-session">CHECK-IN THÀNH CÔNG</h1>
+      <h1 id="title" class="title-session" hidden>CHECK-IN THÀNH CÔNG</h1>
 
-      <section class="gallery" aria-label="Không gian Face Wash Fox Vincom Đồng Khởi">
-        <figure class="shot"><img src="/vincom/S4.jpg" alt="Khu giường điều trị" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S6b.jpg" alt="Không gian điều trị" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S7.jpg" alt="Góc chờ Face Wash Fox" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S10.jpg" alt="Góc trang trí cửa hàng" loading="lazy" /></figure>
-      </section>
+      <p class="lead session-ready-text" id="lead">Fox Studio đã sẵn sàng, mời Foxie đến khu vực chụp hình để thả dáng!</p>
 
-      <p class="lead" id="lead">Bước tiếp theo: đến khu vực chụp ảnh.</p>
-
-      <section id="next-step" class="notice" aria-live="polite">
-        <p class="notice__eyebrow">BƯỚC TIẾP THEO</p>
-        <p class="notice__title">Đến khu vực chụp ảnh</p>
-        <ol class="notice__steps">
-          <li>Giữ màn hình này.</li>
-          <li>Đến booth Face Wash Fox.</li>
-          <li>Nhân viên sẽ gọi tên bạn để chụp.</li>
-        </ol>
+      <section id="frame-step" class="panel frame-step">
+        <div id="frame-loading" class="frame-loading" hidden>
+          <span class="frame-loading__spinner" aria-hidden="true"></span>
+          <span>Đang chọn frame…</span>
+        </div>
+        <fieldset class="frame-picker" aria-label="Chọn frame chụp ảnh">
+          <legend>Chọn frame ảnh</legend>
+          <label class="frame-choice">
+            <input type="radio" name="selectedFrameId" value="frame-1" />
+            <span><img src="/frames/frame-1.png" alt="Frame 1" loading="lazy" /></span>
+          </label>
+          <label class="frame-choice">
+            <input type="radio" name="selectedFrameId" value="frame-2" />
+            <span><img src="/frames/frame-2.png" alt="Frame 2" loading="lazy" /></span>
+          </label>
+          <label class="frame-choice">
+            <input type="radio" name="selectedFrameId" value="frame-3" />
+            <span><img src="/frames/frame-3.png" alt="Frame 3" loading="lazy" /></span>
+          </label>
+          <label class="frame-choice">
+            <input type="radio" name="selectedFrameId" value="frame-4" />
+            <span><img src="/frames/frame-4.png" alt="Frame 4" loading="lazy" /></span>
+          </label>
+          <label class="frame-choice">
+            <input type="radio" name="selectedFrameId" value="frame-5" />
+            <span><img src="/frames/frame-5.png" alt="Frame 5" loading="lazy" /></span>
+          </label>
+        </fieldset>
       </section>
 
       <section class="panel">
-        <p class="queue-sub">Họ và tên</p>
-        <p class="guest-name" id="name">—</p>
-
-        <p class="queue-sub" style="margin-top: 1rem">Số điện thoại</p>
-        <p class="guest-phone" id="phone">—</p>
-
-        <p style="margin-top: 1rem"><span class="status-pill" id="status">WAITING</span></p>
+        <p class="guest-owner" id="name">Ảnh này của —</p>
 
         <div class="photo-slot" id="photo-slot">
           <div class="photo-placeholder" id="photo-placeholder">
-            <p class="photo-placeholder__text">Ảnh của bạn sẽ xuất hiện tại đây nhé</p>
+            <p class="photo-placeholder__text">Ảnh của bạn sẽ <br></br> xuất hiện tại đây nhé</p>
+            <span class="status-pill" id="status">WAITING</span>
           </div>
           <img id="photo" class="photo-preview" alt="Ảnh Face Wash Fox của bạn" hidden />
         </div>

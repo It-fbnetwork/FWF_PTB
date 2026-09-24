@@ -14,9 +14,9 @@ export const config = {
   framesDir: join(dataDir, "frames"),
   logsDir: join(dataDir, "logs"),
   framePath: join(dataDir, "frames", "default.png"),
-  // Portrait photo frame — 9:16 (1080 × 1920)
+  // Portrait LED frame — 8:16 (1080 × 2160)
   outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 1080),
-  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1920),
+  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 2160),
   jpegQuality: Number(process.env.FWF_JPEG_QUALITY ?? 90),
   transferPollMs: Number(process.env.FWF_TRANSFER_POLL_MS ?? 300),
   transferStableChecks: Number(process.env.FWF_TRANSFER_STABLE_CHECKS ?? 3),

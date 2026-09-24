@@ -4,6 +4,8 @@ import { uploadPhotoObject } from "./r2";
 import type { PhotoSession, SessionPhoto, SessionStatus, UnassignedPhoto } from "./types";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const FRAME_OPTIONS = new Set(["frame-1", "frame-2", "frame-3", "frame-4", "frame-5"]);
+const CLEAR_FRAME_PREVIEW_ID = "__clear__";
 
 type SessionRow = {
   id: string;
@@ -16,6 +18,7 @@ type SessionRow = {
   captured_at: string | null;
   completed_at: string | null;
   selected_photo_id: string | null;
+  selected_frame_id: string;
 };
 
 type PhotoRow = {
@@ -30,6 +33,10 @@ type PhotoRow = {
 
 function normalizePhone(phone: string): string {
   return phone.replace(/[^\d+]/g, "").trim();
+}
+
+function normalizeFrameId(value: unknown): string {
+  return FRAME_OPTIONS.has(String(value)) ? String(value) : "frame-1";
 }
 
 function generateCode(): string {
@@ -108,6 +115,7 @@ async function mapSession(row: SessionRow, photos?: SessionPhoto[]): Promise<Pho
     name: n.name,
     phone: n.phone,
     status: n.status,
+    selectedFrameId: normalizeFrameId(n.selected_frame_id),
     consentAt: n.consent_at,
     createdAt: n.created_at,
     capturedAt: n.captured_at,
@@ -156,6 +164,22 @@ export async function getSessionByCode(code: string): Promise<PhotoSession | nul
   return mapSession(row);
 }
 
+export async function updateSessionFrameByCode(
+  code: string,
+  selectedFrameIdInput: unknown,
+): Promise<PhotoSession> {
+  const selectedFrameId = normalizeFrameId(selectedFrameIdInput);
+  const row = await queryOne<SessionRow>(
+    `update sessions
+     set selected_frame_id = $2
+     where code = $1
+     returning *`,
+    [code.trim().toUpperCase(), selectedFrameId],
+  );
+  if (!row) throw new Error("Session not found");
+  return mapSession(row);
+}
+
 export async function getActiveSession(): Promise<PhotoSession | null> {
   const activeId = await getActiveSessionId();
   if (!activeId) return null;
@@ -185,9 +209,11 @@ export async function createSession(input: {
   name: string;
   phone: string;
   consent: boolean;
+  selectedFrameId?: string;
 }): Promise<PhotoSession> {
   const name = input.name.trim();
   const phone = normalizePhone(input.phone);
+  const selectedFrameId = normalizeFrameId(input.selectedFrameId);
   if (!name) throw new Error("Name is required");
   if (phone.length < 8) throw new Error("Phone number is invalid");
   if (!input.consent) throw new Error("Consent is required");
@@ -201,10 +227,10 @@ export async function createSession(input: {
     try {
       const row = await queryOne<SessionRow>(
         `insert into sessions
-           (id, code, name, phone, status, consent_at, created_at)
-         values ($1, $2, $3, $4, 'READY', $5, $5)
+           (id, code, name, phone, status, consent_at, created_at, selected_frame_id)
+         values ($1, $2, $3, $4, 'READY', $5, $5, $6)
          returning *`,
-        [id, code, name, phone, now],
+        [id, code, name, phone, now, selectedFrameId],
       );
       if (!row) throw new Error("Insert session failed");
 
@@ -416,6 +442,62 @@ export async function listRecentPhotosSince(sinceIso: string): Promise<
       sessionCode: session?.code ?? null,
       sessionName: session?.name ?? null,
       createdAt: iso(row.created_at)!,
+    };
+  });
+}
+
+export async function recordFramePreview(frameIdInput: unknown): Promise<{
+  frameId: string;
+  frameUrl: string;
+  createdAt: string;
+}> {
+  const frameId = normalizeFrameId(frameIdInput);
+  const row = await queryOne<{ frame_id: string; created_at: string | Date }>(
+    `insert into frame_preview_events (frame_id)
+     values ($1)
+     returning frame_id, created_at`,
+    [frameId],
+  );
+  const createdAt = iso(row?.created_at) ?? new Date().toISOString();
+  return { frameId, frameUrl: `/frames/${frameId}.png`, createdAt };
+}
+
+export async function recordFramePreviewClear(): Promise<{ createdAt: string }> {
+  const row = await queryOne<{ created_at: string | Date }>(
+    `insert into frame_preview_events (frame_id)
+     values ($1)
+     returning created_at`,
+    [CLEAR_FRAME_PREVIEW_ID],
+  );
+  return { createdAt: iso(row?.created_at) ?? new Date().toISOString() };
+}
+
+export async function listRecentFramePreviewsSince(sinceIso: string): Promise<
+  Array<
+    | { type: "frame_preview"; frameId: string; frameUrl: string; createdAt: string }
+    | { type: "frame_preview_clear"; createdAt: string }
+  >
+> {
+  const rows = await query<{ frame_id: string; created_at: string | Date }>(
+    `select frame_id, created_at
+     from frame_preview_events
+     where created_at > $1::timestamptz
+     order by created_at asc
+     limit 50`,
+    [sinceIso],
+  );
+
+  return rows.map((row) => {
+    const createdAt = iso(row.created_at)!;
+    if (row.frame_id === CLEAR_FRAME_PREVIEW_ID) {
+      return { type: "frame_preview_clear", createdAt };
+    }
+    const frameId = normalizeFrameId(row.frame_id);
+    return {
+      type: "frame_preview",
+      frameId,
+      frameUrl: `/frames/${frameId}.png`,
+      createdAt,
     };
   });
 }

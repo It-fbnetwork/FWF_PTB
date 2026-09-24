@@ -24,6 +24,7 @@ export type PhotoSession = {
   name: string;
   phone: string;
   status: SessionStatus;
+  selectedFrameId: string;
   consentAt: string;
   createdAt: string;
   capturedAt: string | null;
