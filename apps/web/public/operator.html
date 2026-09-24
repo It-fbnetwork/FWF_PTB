@@ -41,6 +41,22 @@
         <div id="recent" class="queue"></div>
       </section>
     </main>
+
+    <div id="photo-modal" class="photo-modal" hidden>
+      <div class="photo-modal__backdrop" data-action="close-modal"></div>
+      <div class="photo-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="photo-modal-title">
+        <div class="photo-modal__header">
+          <div>
+            <p class="brand" style="margin-bottom: 0.2rem">FACE WASH FOX</p>
+            <h2 id="photo-modal-title" class="photo-modal__title">Ảnh khách</h2>
+            <p id="photo-modal-sub" class="queue-sub"></p>
+          </div>
+          <button type="button" class="btn btn--ghost" data-action="close-modal">ĐÓNG</button>
+        </div>
+        <div id="photo-modal-body" class="photo-modal__body"></div>
+      </div>
+    </div>
+
     <script src="/assets/operator.js" type="module"></script>
   </body>
 </html>

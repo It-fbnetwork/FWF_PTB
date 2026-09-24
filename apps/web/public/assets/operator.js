@@ -2,12 +2,20 @@ const activeEl = document.getElementById("active");
 const queueEl = document.getElementById("queue");
 const recentEl = document.getElementById("recent");
 const emptyEl = document.getElementById("empty");
+const photoModal = document.getElementById("photo-modal");
+const photoModalTitle = document.getElementById("photo-modal-title");
+const photoModalSub = document.getElementById("photo-modal-sub");
+const photoModalBody = document.getElementById("photo-modal-body");
 
 if (
   !(activeEl instanceof HTMLElement) ||
   !(queueEl instanceof HTMLElement) ||
   !(recentEl instanceof HTMLElement) ||
-  !(emptyEl instanceof HTMLElement)
+  !(emptyEl instanceof HTMLElement) ||
+  !(photoModal instanceof HTMLElement) ||
+  !(photoModalTitle instanceof HTMLElement) ||
+  !(photoModalSub instanceof HTMLElement) ||
+  !(photoModalBody instanceof HTMLElement)
 ) {
   throw new Error("Operator DOM incomplete");
 }
@@ -51,6 +59,53 @@ function pill(status) {
   return `<span class="status-pill ${cls}">${status}</span>`;
 }
 
+function selectedPhotos(session) {
+  const photos = Array.isArray(session.photos) ? session.photos : [];
+  if (photos.length === 0) return [];
+  if (session.selectedPhotoId) {
+    const selected = photos.filter((p) => p.id === session.selectedPhotoId);
+    if (selected.length > 0) return selected;
+  }
+  return photos;
+}
+
+function viewPhotoButton(session) {
+  if (!session.photos?.length) return "";
+  return `<button class="btn btn--ghost" data-action="view-photos" data-id="${session.id}">XEM ẢNH (${session.photos.length})</button>`;
+}
+
+function openPhotoModal(session) {
+  const photos = selectedPhotos(session);
+  if (photos.length === 0) {
+    alert("Session này chưa có ảnh.");
+    return;
+  }
+
+  photoModalTitle.textContent = `Ảnh · ${session.code}`;
+  photoModalSub.textContent = `${session.name} · ${session.phone}`;
+  photoModalBody.innerHTML = photos
+    .map((photo, index) => {
+      const label = photo.processedFilename || `Ảnh ${index + 1}`;
+      return `
+        <article class="photo-modal__item">
+          <img src="${escapeHtml(photo.url)}" alt="${escapeHtml(label)}" />
+          <div class="photo-modal__meta">
+            <span class="queue-sub">${escapeHtml(label)}</span>
+            <a class="btn btn--ghost" href="${escapeHtml(photo.url)}" target="_blank" rel="noopener">MỞ / TẢI</a>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  photoModal.hidden = false;
+}
+
+function closePhotoModal() {
+  photoModal.hidden = true;
+  photoModalBody.innerHTML = "";
+}
+
 function renderActive(session) {
   if (session) {
     activeEl.hidden = false;
@@ -62,6 +117,7 @@ function renderActive(session) {
         <span class="queue-sub">${escapeHtml(session.phone)} · ${session.photos.length} photo(s)</span>
         <div style="margin-top:0.55rem">${pill(session.status)}</div>
         <div class="btn-row" style="margin-top:0.8rem">
+          ${viewPhotoButton(session)}
           <button class="btn btn--ghost" data-action="complete" data-id="${session.id}">COMPLETE</button>
           <button class="btn btn--danger" data-action="cancel" data-id="${session.id}">CANCEL</button>
         </div>
@@ -89,6 +145,9 @@ function renderActive(session) {
 function renderItem(session, { showPrepare }) {
   const isActive = snapshot.activeSessionId === session.id;
   const actions = [];
+  if (session.photos?.length) {
+    actions.push(viewPhotoButton(session));
+  }
   if (showPrepare) {
     actions.push(`<button class="btn" data-action="prepare" data-id="${session.id}">PREPARE PHOTO</button>`);
   }
@@ -104,7 +163,7 @@ function renderItem(session, { showPrepare }) {
       <div class="queue-meta">
         <span class="queue-code">${session.code}</span>
         <span class="queue-name">${escapeHtml(session.name)}</span>
-        <span class="queue-sub">${escapeHtml(session.phone)}</span>
+        <span class="queue-sub">${escapeHtml(session.phone)}${session.photos?.length ? ` · ${session.photos.length} ảnh` : ""}</span>
         <div>${pill(session.status)}</div>
       </div>
       <div class="btn-row">${actions.join("")}</div>
@@ -152,9 +211,25 @@ async function refresh() {
 document.addEventListener("click", async (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
+
+  if (target.dataset.action === "close-modal") {
+    closePhotoModal();
+    return;
+  }
+
   const action = target.dataset.action;
   const id = target.dataset.id;
   if (!action || !id) return;
+
+  if (action === "view-photos") {
+    const session = snapshot.sessions.find((s) => s.id === id) ?? snapshot.activeSession;
+    if (!session || session.id !== id) {
+      alert("Không tìm thấy session.");
+      return;
+    }
+    openPhotoModal(session);
+    return;
+  }
 
   target.setAttribute("disabled", "true");
   try {
@@ -167,6 +242,10 @@ document.addEventListener("click", async (event) => {
   } finally {
     target.removeAttribute("disabled");
   }
+});
+
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !photoModal.hidden) closePhotoModal();
 });
 
 await refresh();
