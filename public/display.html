@@ -4,15 +4,24 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>FWF Photo Booth Display</title>
-    <link rel="stylesheet" href="/assets/display.css" />
+    <link rel="stylesheet" href="/display.css" />
   </head>
   <body>
     <main id="stage" class="stage" aria-live="polite">
       <div class="panel" style="container-type: inline-size">
         <section id="idle" class="idle is-visible" aria-label="Idle screen">
+          <div class="idle__slides" aria-hidden="true">
+            <img class="idle__slide is-active" src="/vincom/MT1.jpg" alt="" />
+            <img class="idle__slide" src="/vincom/S3.jpg" alt="" />
+            <img class="idle__slide" src="/vincom/S9.jpg" alt="" />
+            <img class="idle__slide" src="/vincom/MT2.jpg" alt="" />
+            <img class="idle__slide" src="/vincom/S7.jpg" alt="" />
+            <img class="idle__slide" src="/vincom/S5.jpg" alt="" />
+          </div>
+          <div class="idle__veil" aria-hidden="true"></div>
           <div class="idle__glow" aria-hidden="true"></div>
           <div class="idle__frame">
-            <p class="idle__eyebrow">FACE WASH FOX</p>
+            <p class="idle__eyebrow">FACE WASH FOX · VINCOM ĐỒNG KHỞI</p>
             <h1 class="idle__title">PHOTO<br />BOOTH</h1>
             <p class="idle__hint">Waiting for the next moment</p>
           </div>
@@ -24,6 +33,6 @@
       </div>
     </main>
 
-    <script src="/assets/display.js" type="module"></script>
+    <script src="/display.js" type="module"></script>
   </body>
 </html>

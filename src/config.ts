@@ -12,9 +12,9 @@ export const config = {
   framesDir: join(dataDir, "frames"),
   logsDir: join(dataDir, "logs"),
   framePath: join(dataDir, "frames", "default.png"),
-  // LED column active area from blueprint: 960 × 1280 (portrait 3:4)
-  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 960),
-  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1280),
+  // Portrait photo frame — 9:16 (1080 × 1920)
+  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 1080),
+  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1920),
   jpegQuality: Number(process.env.FWF_JPEG_QUALITY ?? 90),
   /** How often to re-check file size while the camera is still writing. */
   transferPollMs: Number(process.env.FWF_TRANSFER_POLL_MS ?? 300),

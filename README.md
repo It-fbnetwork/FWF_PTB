@@ -76,8 +76,12 @@ export FWF_DATA_DIR="$HOME/FWF_PhotoBooth"
 npm run agent
 ```
 
-Staff: cloud `/operator` + PIN. LED: cloud `/display`.  
+Staff: cloud `/operator` + PIN.  
+LED at store: **local** `http://localhost:3020/display` (works offline).  
+Cloud LED / guest download: `https://YOUR_VERCEL_URL/display` and `/checkin/CODE`.  
 QR: `https://YOUR_VERCEL_URL/checkin`.
+
+If upload fails (no internet), agent retries from `~/FWF_PhotoBooth/upload-queue.json`.
 
 ## Local web dev
 
@@ -86,6 +90,14 @@ cp .env.example apps/web/.env.local
 # fill DATABASE_URL + R2_* + PIN + token
 npm install
 npm run dev
+```
+
+In another terminal:
+
+```bash
+export FWF_API_URL=http://localhost:3010
+export FWF_AGENT_TOKEN=same-as-AGENT_TOKEN
+npm run agent
 ```
 
 ## Verify

@@ -3,6 +3,8 @@ dist/
 .next/
 .env
 .env.local
+**/.env
+**/.env.local
 .DS_Store
 *.log
 apps/web/.next/

@@ -1,12 +1,14 @@
 import { access, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
-import { fetchActiveSession, pingCloud, uploadProcessedPhoto } from "./cloud.js";
+import { fetchActiveSession, pingCloud } from "./cloud.js";
 import { config } from "./config.js";
 import { ensureLocalFolders } from "./ensure-dirs.js";
 import { ensureDefaultFrame } from "./ensure-frame.js";
 import { isJpeg } from "./jpeg.js";
+import { broadcastLocalPhoto, localMediaUrl, startLocalDisplay } from "./local-display.js";
 import { log } from "./logger.js";
 import { processPhotoSafely } from "./processor.js";
+import { enqueueUpload, initUploadQueue } from "./upload-queue.js";
 import { waitUntilFileComplete } from "./wait-for-file.js";
 import { startWatcher } from "./watcher.js";
 
@@ -50,23 +52,25 @@ async function handleNewPhoto(filePath: string): Promise<boolean> {
   const result = await processPhotoSafely(filePath);
   if (!result) return true;
 
-  try {
-    const uploaded = await uploadProcessedPhoto({
-      filePath: result.outputPath,
-      originalFilename: name,
-      processedFilename: basename(result.outputPath),
+  // Local LED first (works offline).
+  if (config.localDisplay) {
+    const url = localMediaUrl(result.outputPath);
+    broadcastLocalPhoto({
+      filename: basename(result.outputPath),
+      url,
+      createdAt: new Date().toISOString(),
     });
-    if (uploaded.assigned && uploaded.sessionCode) {
-      log.success(`Uploaded + linked → ${uploaded.sessionCode}`);
-    } else {
-      log.warn("Uploaded as unassigned (still shown on LED when polled).");
-    }
-    if (uploaded.url) log.info(`Public URL:\n${uploaded.url}`);
-    log.success("DONE");
-  } catch (error) {
-    log.error(`Upload failed: ${error instanceof Error ? error.message : String(error)}`);
+    log.success(`Local display queued: ${basename(result.outputPath)}`);
   }
 
+  // Cloud upload with retry queue.
+  await enqueueUpload({
+    filePath: result.outputPath,
+    originalFilename: name,
+    processedFilename: basename(result.outputPath),
+  });
+
+  log.success("DONE");
   log.blank();
   log.info("Waiting for new photo...");
   return true;
@@ -83,12 +87,11 @@ async function processOnce(inputPath: string): Promise<void> {
     process.exitCode = 1;
     return;
   }
-  const uploaded = await uploadProcessedPhoto({
+  await enqueueUpload({
     filePath: result.outputPath,
     originalFilename: basename(filePath),
     processedFilename: basename(result.outputPath),
   });
-  log.success(uploaded.assigned ? `Linked → ${uploaded.sessionCode}` : "Uploaded unassigned");
 }
 
 async function main(): Promise<void> {
@@ -101,9 +104,16 @@ async function main(): Promise<void> {
 
   await ensureLocalFolders();
   await ensureDefaultFrame();
-  await pingCloud();
+  await initUploadQueue();
 
-  log.banner("FWF Camera Agent (cloud) started");
+  try {
+    await pingCloud();
+  } catch (error) {
+    log.warn(`Cloud unreachable at start: ${error instanceof Error ? error.message : String(error)}`);
+    log.info("Agent will keep processing locally and retry uploads.");
+  }
+
+  log.banner("FWF Camera Agent (Phase 4) started");
 
   const onceIndex = process.argv.indexOf("--once");
   if (onceIndex !== -1) {
@@ -119,7 +129,16 @@ async function main(): Promise<void> {
     throw new Error(`Watch folder does not exist: ${config.watchDir}`);
   }
 
+  if (config.localDisplay) {
+    try {
+      await startLocalDisplay();
+    } catch (error) {
+      log.warn(`Local display failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
   log.info(`JPEG files that already exist in the watch folder will be ignored.`);
+  log.info(`Cloud API: ${config.apiUrl}`);
   startWatcher(handleNewPhoto);
 }
 

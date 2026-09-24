@@ -1,2 +1,6 @@
-# Set Vercel Root Directory to apps/web (Project Settings → General).
-# Then deploy from GitHub main.
+{
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "npm run build -w @fwf/web",
+  "outputDirectory": "apps/web/.next"
+}

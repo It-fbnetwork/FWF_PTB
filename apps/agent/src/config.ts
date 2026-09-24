@@ -14,12 +14,19 @@ export const config = {
   framesDir: join(dataDir, "frames"),
   logsDir: join(dataDir, "logs"),
   framePath: join(dataDir, "frames", "default.png"),
-  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 960),
-  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1280),
+  // Portrait photo frame — 9:16 (1080 × 1920)
+  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 1080),
+  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1920),
   jpegQuality: Number(process.env.FWF_JPEG_QUALITY ?? 90),
   transferPollMs: Number(process.env.FWF_TRANSFER_POLL_MS ?? 300),
   transferStableChecks: Number(process.env.FWF_TRANSFER_STABLE_CHECKS ?? 3),
   transferTimeoutMs: Number(process.env.FWF_TRANSFER_TIMEOUT_MS ?? 60_000),
+  /** Local LED page (offline-capable). Default 3020 avoids Next.js on 3010. */
+  displayHost: process.env.FWF_DISPLAY_HOST ?? "0.0.0.0",
+  displayPort: Number(process.env.FWF_DISPLAY_PORT ?? 3020),
+  displayDurationMs: Number(process.env.FWF_DISPLAY_DURATION_MS ?? 8000),
+  displayFadeMs: Number(process.env.FWF_DISPLAY_FADE_MS ?? 700),
+  localDisplay: (process.env.FWF_LOCAL_DISPLAY ?? "1") !== "0",
   jpegExtensions: [".jpg", ".jpeg", ".JPG", ".JPEG"] as const,
 } as const;
 

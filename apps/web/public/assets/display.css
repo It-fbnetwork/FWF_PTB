@@ -4,9 +4,9 @@
   --fwf-orange: #e85d04;
   --fwf-amber: #f4a261;
   --fade-ms: 700ms;
-  /* LED column content area from blueprint */
-  --led-w: 960;
-  --led-h: 1280;
+  /* Portrait LED panel — 9:16 */
+  --led-w: 1080;
+  --led-h: 1920;
 }
 
 * {
@@ -45,11 +45,11 @@ html:-webkit-full-screen body {
   background: #0a0705;
 }
 
-/* Portrait LED panel: fill viewport while keeping 960:1280 */
+/* Portrait LED panel: fill viewport while keeping 9:16 */
 .panel {
   position: relative;
-  width: min(100vw, calc(100vh * 960 / 1280));
-  height: min(100vh, calc(100vw * 1280 / 960));
+  width: min(100vw, calc(100vh * 9 / 16));
+  height: min(100vh, calc(100vw * 16 / 9));
   overflow: hidden;
   background: var(--fwf-ink);
 }
@@ -71,9 +71,35 @@ html:-webkit-full-screen body {
 .idle {
   display: grid;
   place-items: center;
+  background: #120c08;
+}
+
+.idle__slides {
+  position: absolute;
+  inset: 0;
+}
+
+.idle__slide {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+.idle__slide.is-active {
+  opacity: 1;
+}
+
+.idle__veil {
+  position: absolute;
+  inset: 0;
   background:
-    radial-gradient(ellipse 80% 45% at 50% 30%, rgba(232, 93, 4, 0.24), transparent 70%),
-    linear-gradient(180deg, #2a1a12 0%, #1a120b 48%, #0f0a07 100%);
+    linear-gradient(180deg, rgba(10, 7, 5, 0.35) 0%, rgba(10, 7, 5, 0.55) 45%, rgba(10, 7, 5, 0.78) 100%),
+    radial-gradient(ellipse 80% 45% at 50% 30%, rgba(232, 93, 4, 0.22), transparent 70%);
 }
 
 .idle__glow {
@@ -88,13 +114,14 @@ html:-webkit-full-screen body {
 
 .idle__frame {
   position: relative;
+  z-index: 1;
   text-align: center;
   padding: 8% 6%;
 }
 
 .idle__eyebrow {
-  letter-spacing: 0.28em;
-  font-size: clamp(0.7rem, 2.4cqi, 1rem);
+  letter-spacing: 0.22em;
+  font-size: clamp(0.62rem, 2.1cqi, 0.92rem);
   font-weight: 600;
   color: var(--fwf-amber);
   margin-bottom: 0.85rem;
@@ -106,13 +133,14 @@ html:-webkit-full-screen body {
   letter-spacing: 0.1em;
   line-height: 1.05;
   color: var(--fwf-cream);
+  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
 }
 
 .idle__hint {
   margin-top: 1.2rem;
   font-size: clamp(0.85rem, 3cqi, 1.15rem);
   letter-spacing: 0.06em;
-  color: rgba(255, 248, 240, 0.62);
+  color: rgba(255, 248, 240, 0.72);
 }
 
 .photo {
@@ -143,7 +171,8 @@ html:-webkit-full-screen body {
 @media (prefers-reduced-motion: reduce) {
   .idle,
   .photo,
-  .idle__glow {
+  .idle__glow,
+  .idle__slide {
     transition: none;
     animation: none;
   }

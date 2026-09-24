@@ -130,8 +130,23 @@ function enterFullscreenOnGesture() {
   });
 }
 
+function startIdleSlideshow() {
+  const slides = [...document.querySelectorAll(".idle__slide")];
+  if (slides.length < 2) return;
+  let index = slides.findIndex((el) => el.classList.contains("is-active"));
+  if (index < 0) index = 0;
+
+  setInterval(() => {
+    if (!idleEl.classList.contains("is-visible")) return;
+    slides[index]?.classList.remove("is-active");
+    index = (index + 1) % slides.length;
+    slides[index]?.classList.add("is-active");
+  }, 5000);
+}
+
 await loadConfig();
 enterFullscreenOnGesture();
+startIdleSlideshow();
 await pollPhotos();
 setInterval(() => {
   void pollPhotos();
