@@ -410,6 +410,33 @@ input:focus {
   display: none !important;
 }
 
+.download-fab {
+  position: fixed;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 40;
+}
+
+.download-fab__btn {
+  display: grid;
+  place-items: center;
+  width: 2.85rem;
+  height: 2.85rem;
+  border-radius: 999px;
+  background: var(--fwf-orange);
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.download-fab__btn:hover {
+  filter: brightness(1.06);
+}
+
+.download-fab__btn:active {
+  transform: scale(0.96);
+}
+
 .top-links {
   display: flex;
   gap: 1rem;
@@ -429,6 +456,80 @@ input:focus {
 .empty {
   color: var(--fwf-muted);
   padding: 1rem 0;
+}
+
+.photo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.photo-modal[hidden] {
+  display: none !important;
+}
+
+.photo-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 5, 3, 0.78);
+}
+
+.photo-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(720px, 100%);
+  max-height: min(90vh, 920px);
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid var(--fwf-line);
+  background: #1a120b;
+  padding: 1.1rem 1.2rem 1.3rem;
+}
+
+.photo-modal__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.photo-modal__title {
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+}
+
+.photo-modal__body {
+  display: grid;
+  gap: 1rem;
+}
+
+.photo-modal__item {
+  border: 1px solid var(--fwf-line);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #000;
+}
+
+.photo-modal__item img {
+  display: block;
+  width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+  background: #000;
+}
+
+.photo-modal__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.9rem;
+  border-top: 1px solid var(--fwf-line);
+  background: rgba(255, 248, 240, 0.04);
 }
 
 @media (max-width: 640px) {

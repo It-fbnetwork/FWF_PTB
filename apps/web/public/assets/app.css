@@ -412,7 +412,7 @@ input:focus {
 
 .download-fab {
   position: fixed;
-  top: max(0.85rem, env(safe-area-inset-top));
+  bottom: max(1rem, env(safe-area-inset-bottom));
   right: max(0.85rem, env(safe-area-inset-right));
   z-index: 40;
 }
