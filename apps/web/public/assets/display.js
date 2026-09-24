@@ -131,10 +131,40 @@ function enterFullscreenOnGesture() {
 }
 
 function startIdleSlideshow() {
-  const slides = [...document.querySelectorAll(".idle__slide")];
+  const VINCOM_SLIDES = [
+    "MT1.jpg",
+    "MT2.jpg",
+    "MT3.jpg",
+    "MT4.jpg",
+    "S1.jpg",
+    "S2.jpg",
+    "S3.jpg",
+    "S4.jpg",
+    "S5.jpg",
+    "S5-2B.jpg",
+    "S6b.jpg",
+    "S7.jpg",
+    "S8.jpg",
+    "S9.jpg",
+    "S10.jpg",
+    "PV1.jpg",
+    "PV2.jpg",
+  ];
+
+  const slidesRoot = document.getElementById("idle-slides");
+  if (!(slidesRoot instanceof HTMLElement)) return;
+
+  for (const [i, name] of VINCOM_SLIDES.entries()) {
+    const img = document.createElement("img");
+    img.className = `idle__slide${i === 0 ? " is-active" : ""}`;
+    img.src = `/vincom/${name}`;
+    img.alt = "";
+    slidesRoot.append(img);
+  }
+
+  const slides = [...slidesRoot.querySelectorAll(".idle__slide")];
   if (slides.length < 2) return;
-  let index = slides.findIndex((el) => el.classList.contains("is-active"));
-  if (index < 0) index = 0;
+  let index = 0;
 
   setInterval(() => {
     if (!idleEl.classList.contains("is-visible")) return;

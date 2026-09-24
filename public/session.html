@@ -6,14 +6,22 @@
     <title>FWF Session</title>
     <link rel="stylesheet" href="/app.css" />
   </head>
-  <body>
+  <body class="page-session">
     <main class="shell shell--narrow">
       <div class="top-links">
         <a href="/checkin" id="back-link">← Quay lại check-in</a>
       </div>
 
       <p class="brand">FACE WASH FOX</p>
-      <h1 id="title">CHECK-IN THÀNH CÔNG</h1>
+      <h1 id="title" class="title-session">CHECK-IN THÀNH CÔNG</h1>
+
+      <section class="gallery" aria-label="Không gian Face Wash Fox Vincom Đồng Khởi">
+        <figure class="shot"><img src="/vincom/S4.jpg" alt="Khu giường điều trị" loading="lazy" /></figure>
+        <figure class="shot"><img src="/vincom/S6b.jpg" alt="Không gian điều trị" loading="lazy" /></figure>
+        <figure class="shot"><img src="/vincom/S7.jpg" alt="Góc chờ Face Wash Fox" loading="lazy" /></figure>
+        <figure class="shot"><img src="/vincom/S10.jpg" alt="Góc trang trí cửa hàng" loading="lazy" /></figure>
+      </section>
+
       <p class="lead" id="lead">Bước tiếp theo: đến khu vực chụp ảnh.</p>
 
       <section id="next-step" class="notice" aria-live="polite">
@@ -46,27 +54,7 @@
           <a class="btn" id="download" href="#" download>DOWNLOAD</a>
         </div>
       </section>
-
-      <section class="gallery gallery--compact" aria-label="Không gian Face Wash Fox Vincom Đồng Khởi">
-        <figure class="shot"><img src="/vincom/MT1.jpg" alt="Mặt tiền cửa hàng" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S1.jpg" alt="Tường thương hiệu" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S9.jpg" alt="Góc trang trí" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S5.jpg" alt="Khu vực chờ" loading="lazy" /></figure>
-      </section>
     </main>
-
-    <aside class="atmosphere" aria-hidden="true">
-      <div class="atmosphere__rail atmosphere__rail--left">
-        <figure class="shot"><img src="/vincom/S2.jpg" alt="" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/MT4.jpg" alt="" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S8.jpg" alt="" loading="lazy" /></figure>
-      </div>
-      <div class="atmosphere__rail atmosphere__rail--right">
-        <figure class="shot"><img src="/vincom/S5-2B.jpg" alt="" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/MT2.jpg" alt="" loading="lazy" /></figure>
-        <figure class="shot"><img src="/vincom/S4.jpg" alt="" loading="lazy" /></figure>
-      </div>
-    </aside>
     <script src="/session.js" type="module"></script>
   </body>
 </html>

@@ -33,6 +33,13 @@ body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+body.page-session {
+  background-image:
+    linear-gradient(180deg, rgba(15, 10, 7, 0.72) 0%, rgba(26, 18, 11, 0.82) 45%, rgba(15, 10, 7, 0.9) 100%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(232, 93, 4, 0.18), transparent 60%),
+    url("/vincom/S5-2B.jpg");
+}
+
 a {
   color: var(--fwf-amber);
 }
@@ -49,12 +56,7 @@ a {
   width: min(440px, calc(100% - 2rem));
 }
 
-/* 9:16 Vincom atmosphere frames */
-.atmosphere {
-  display: none;
-  pointer-events: none;
-}
-
+/* 9:16 Vincom gallery frames */
 .shot {
   margin: 0;
   aspect-ratio: 9 / 16;
@@ -105,52 +107,6 @@ a {
   object-position: 70% center;
 }
 
-@media (min-width: 1100px) {
-  .atmosphere {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-  }
-
-  .atmosphere__rail {
-    position: absolute;
-    top: 50%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: min(160px, 11vw);
-    transform: translateY(-50%);
-  }
-
-  .atmosphere__rail--left {
-    left: max(1.25rem, calc(50% - 520px - 180px));
-  }
-
-  .atmosphere__rail--right {
-    right: max(1.25rem, calc(50% - 520px - 180px));
-  }
-
-  .atmosphere__rail .shot:nth-child(2) {
-    transform: translateY(1.25rem) scale(0.94);
-    opacity: 0.88;
-  }
-
-  .atmosphere__rail .shot:nth-child(3) {
-    transform: translateY(-0.5rem) scale(0.88);
-    opacity: 0.72;
-  }
-
-  .shell--narrow ~ .atmosphere .atmosphere__rail--left {
-    left: max(1.25rem, calc(50% - 280px - 180px));
-  }
-
-  .shell--narrow ~ .atmosphere .atmosphere__rail--right {
-    right: max(1.25rem, calc(50% - 280px - 180px));
-  }
-}
-
 @media (max-width: 720px) {
   .gallery {
     gap: 0.5rem;
@@ -170,6 +126,12 @@ h1 {
   letter-spacing: normal;
   line-height: 1.1;
   margin-bottom: 0.5rem;
+}
+
+.title-session {
+  font-size: clamp(1.05rem, 4.2vw, 1.45rem);
+  white-space: nowrap;
+  margin-bottom: 0.85rem;
 }
 
 .lead {
@@ -235,6 +197,14 @@ input:focus {
   cursor: pointer;
   background: var(--fwf-orange);
   color: #fff;
+}
+
+.btn--center {
+  display: block;
+  width: fit-content;
+  margin-inline: auto;
+  min-width: 10.5rem;
+  text-align: center;
 }
 
 .btn:disabled {
