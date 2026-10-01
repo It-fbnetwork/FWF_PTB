@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>FWF Session</title>
-    <link rel="stylesheet" href="/assets/app.css" />
+    <link rel="stylesheet" href="/assets/app.css?v=mobile-camera-fix-1" />
   </head>
   <body class="page-session">
     <main class="shell shell--narrow">
@@ -21,11 +21,6 @@
         <div id="frame-loading" class="frame-loading" hidden>
           <span class="frame-loading__spinner" aria-hidden="true"></span>
           <span>Đang chọn frame…</span>
-        </div>
-        <div id="frame-preview" class="session-frame-preview" aria-label="Xem truoc frame">
-          <video id="frame-preview-live" class="session-frame-preview__live" autoplay playsinline muted></video>
-          <img id="frame-preview-image" class="session-frame-preview__image" alt="Frame dang chon" />
-          <div id="camera-status" class="session-camera-status" hidden></div>
         </div>
         <fieldset class="frame-picker" aria-label="Chọn frame chụp ảnh">
           <legend>Chọn frame ảnh</legend>
@@ -82,6 +77,6 @@
         </svg>
       </a>
     </div>
-    <script src="/assets/session.js" type="module"></script>
+    <script src="/assets/session.js?v=mobile-camera-fix-1" type="module"></script>
   </body>
 </html>
