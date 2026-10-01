@@ -16,7 +16,8 @@ export async function triggerCapture(countdownMs: number): Promise<void> {
     throw new Error("Automatic Imaging Edge trigger is currently supported on Windows only");
   }
 
-  const key = process.env.FWF_CAPTURE_KEY ?? " ";
+  // Sony Imaging Edge Remote's official keyboard shortcut for Photo is "1".
+  const key = process.env.FWF_CAPTURE_KEY ?? "1";
   const escapedKey = key.replace(/'/g, "''");
   const script = [
     "$shell = New-Object -ComObject WScript.Shell",

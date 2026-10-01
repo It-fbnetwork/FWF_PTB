@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node --env-file=../web/.env.local --import tsx src/index.ts",
+    "build": "tsc --outDir dist --noEmit false",
+    "start": "npm run build && node --env-file=../web/.env.local dist/index.js",
     "dev": "node --env-file=../web/.env.local --import tsx src/index.ts",
     "typecheck": "tsc --noEmit"
   },
