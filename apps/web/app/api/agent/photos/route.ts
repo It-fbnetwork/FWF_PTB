@@ -12,6 +12,8 @@ export async function POST(req: Request) {
     const file = form.get("file");
     const originalFilename = String(form.get("originalFilename") ?? "capture.jpg");
     const processedFilename = String(form.get("processedFilename") ?? "capture_final.jpg");
+    const sessionId = form.get("sessionId");
+    const sessionCode = form.get("sessionCode");
 
     if (!(file instanceof File)) {
       return json({ error: "file is required" }, 400);
@@ -21,6 +23,8 @@ export async function POST(req: Request) {
     const result = await attachUploadedPhoto({
       originalFilename,
       processedFilename,
+      sessionId: typeof sessionId === "string" ? sessionId : undefined,
+      sessionCode: typeof sessionCode === "string" ? sessionCode : undefined,
       bytes,
       contentType: file.type || "image/jpeg",
     });

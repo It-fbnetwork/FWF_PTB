@@ -42,8 +42,9 @@ export async function processPhoto(inputPath: string, frameId?: string | null): 
   const photo = sharp(inputPath, { failOn: "none" })
     .rotate()
     .resize(config.outputWidth, config.outputHeight, {
-      fit: "cover",
+      fit: config.photoFit,
       position: "centre",
+      background: { r: 0, g: 0, b: 0, alpha: 1 },
       withoutEnlargement: false,
     });
 

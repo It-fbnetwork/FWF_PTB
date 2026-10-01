@@ -319,6 +319,8 @@ export async function getOperatorSnapshot() {
 export async function attachUploadedPhoto(input: {
   originalFilename: string;
   processedFilename: string;
+  sessionId?: string;
+  sessionCode?: string;
   bytes: Buffer;
   contentType?: string;
 }): Promise<{
@@ -342,7 +344,9 @@ export async function attachUploadedPhoto(input: {
   });
 
   const now = new Date().toISOString();
-  const active = await getActiveSession();
+  const requestedSession =
+    input.sessionId ? await getSessionById(input.sessionId) : input.sessionCode ? await getSessionByCode(input.sessionCode) : null;
+  const active = requestedSession ?? (await getActiveSession());
 
   const photoRow = await queryOne<PhotoRow>(
     `insert into photos

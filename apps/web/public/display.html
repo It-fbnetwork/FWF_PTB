@@ -4,11 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>FWF Photo Booth Display</title>
-    <link rel="stylesheet" href="/assets/display.css" />
+    <link rel="stylesheet" href="/assets/display.css?v=direct-camera-4" />
   </head>
   <body>
     <main id="stage" class="stage" aria-live="polite">
-      <div class="panel" style="container-type: inline-size">
+      <div class="panel">
         <section id="idle" class="idle is-visible" aria-label="Idle screen">
           <div class="idle__slides" id="idle-slides" aria-hidden="true"></div>
           <div class="idle__veil" aria-hidden="true"></div>
@@ -24,11 +24,13 @@
         </section>
 
         <section id="frame-preview" class="frame-preview" aria-label="Frame preview" hidden>
+          <video id="frame-preview-live" class="frame-preview__live" autoplay playsinline muted></video>
           <img id="frame-preview-image" class="frame-preview__image" alt="Selected photo frame preview" />
+          <div id="camera-status" class="camera-status" hidden></div>
         </section>
       </div>
     </main>
 
-    <script src="/assets/display.js" type="module"></script>
+    <script src="/assets/display.js?v=direct-camera-4" type="module"></script>
   </body>
 </html>

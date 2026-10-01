@@ -9,6 +9,8 @@ type QueueItem = {
   filePath: string;
   originalFilename: string;
   processedFilename: string;
+  sessionId?: string | null;
+  sessionCode?: string | null;
   attempts: number;
   lastError?: string;
   createdAt: string;
@@ -48,6 +50,8 @@ async function flushOnce(): Promise<void> {
           filePath: item.filePath,
           originalFilename: item.originalFilename,
           processedFilename: item.processedFilename,
+          sessionId: item.sessionId,
+          sessionCode: item.sessionCode,
         });
         queue.shift();
         await saveQueue();
@@ -94,12 +98,16 @@ export async function enqueueUpload(input: {
   filePath: string;
   originalFilename: string;
   processedFilename: string;
+  sessionId?: string | null;
+  sessionCode?: string | null;
 }): Promise<void> {
   queue.push({
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     filePath: input.filePath,
     originalFilename: input.originalFilename,
     processedFilename: input.processedFilename,
+    sessionId: input.sessionId,
+    sessionCode: input.sessionCode,
     attempts: 0,
     createdAt: new Date().toISOString(),
   });

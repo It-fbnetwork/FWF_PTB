@@ -9,6 +9,7 @@ const actionsEl = document.getElementById("actions");
 const downloadEl = document.getElementById("download");
 const frameStepEl = document.getElementById("frame-step");
 const frameLoadingEl = document.getElementById("frame-loading");
+let refreshInFlight = false;
 
 if (
   !(statusEl instanceof HTMLElement) ||
@@ -136,13 +137,24 @@ async function updateFrame(frameId) {
 }
 
 async function refresh() {
+  if (refreshInFlight) return;
+  refreshInFlight = true;
+  try {
   const res = await fetch(`/api/sessions/code/${encodeURIComponent(code)}`);
   if (!res.ok) throw new Error("Không tìm thấy phiên check-in");
   const json = await res.json();
   render(json.session);
+  } finally {
+    refreshInFlight = false;
+  }
 }
 
 await refresh();
+setInterval(() => {
+  void refresh().catch((error) => {
+    console.warn("Session refresh failed", error);
+  });
+}, 2000);
 window.addEventListener("pagehide", clearFramePreview);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") clearFramePreview();
@@ -157,7 +169,7 @@ frameStepEl.addEventListener("change", (event) => {
   }
 });
 
-const source = new EventSource("/api/events");
+const source = new EventSource(`/api/events?code=${encodeURIComponent(code)}`);
 source.addEventListener("session_event", async (message) => {
   try {
     const event = JSON.parse(message.data);

@@ -69,6 +69,8 @@ async function handleNewPhoto(filePath: string): Promise<boolean> {
     filePath: result.outputPath,
     originalFilename: name,
     processedFilename: basename(result.outputPath),
+    sessionId: active?.id,
+    sessionCode: active?.code,
   });
 
   log.success("DONE");

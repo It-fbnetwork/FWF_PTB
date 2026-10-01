@@ -4,9 +4,9 @@
   --fwf-orange: #e85d04;
   --fwf-amber: #f4a261;
   --fade-ms: 700ms;
-  /* Portrait LED panel — 8:16 */
-  --led-w: 1080;
-  --led-h: 2160;
+  /* Native LED module ratio from spec: 86 x 172 px, 160 x 320 mm. */
+  --led-w: 86;
+  --led-h: 172;
 }
 
 * {
@@ -37,21 +37,26 @@ html:-webkit-full-screen body {
 }
 
 .stage {
+  display: grid;
+  place-items: center;
   position: relative;
   width: 100vw;
   height: 100vh;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
   background: #0a0705;
 }
 
-/* Portrait LED panel: fill viewport while keeping 8:16 */
+/* HDMI can be 1080p, portrait, or a custom LED resolution; keep the LED canvas true 1:2. */
 .panel {
+  container-type: size;
   position: relative;
-  width: min(100vw, calc(100vh * 8 / 16));
-  height: min(100vh, calc(100vw * 16 / 8));
+  width: min(100vw, calc(100vh * var(--led-w) / var(--led-h)));
+  height: min(100vh, calc(100vw * var(--led-h) / var(--led-w)));
+  aspect-ratio: var(--led-w) / var(--led-h);
   overflow: hidden;
   background: var(--fwf-ink);
+  contain: strict;
+  transform: translateZ(0);
 }
 
 .idle,
@@ -88,6 +93,7 @@ html:-webkit-full-screen body {
   height: 100%;
   object-fit: cover;
   object-position: center;
+  filter: brightness(1.22) contrast(1.1) saturate(1.08);
   opacity: 0;
   transition: opacity 1.4s ease;
 }
@@ -100,8 +106,8 @@ html:-webkit-full-screen body {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(10, 7, 5, 0.35) 0%, rgba(10, 7, 5, 0.55) 45%, rgba(10, 7, 5, 0.78) 100%),
-    radial-gradient(ellipse 80% 45% at 50% 30%, rgba(232, 93, 4, 0.22), transparent 70%);
+    linear-gradient(180deg, rgba(10, 7, 5, 0.22) 0%, rgba(10, 7, 5, 0.38) 48%, rgba(10, 7, 5, 0.58) 100%),
+    radial-gradient(ellipse 80% 45% at 50% 30%, rgba(232, 93, 4, 0.12), transparent 70%);
 }
 
 .idle__glow {
@@ -118,7 +124,9 @@ html:-webkit-full-screen body {
   position: relative;
   z-index: 1;
   text-align: center;
-  padding: 8% 6%;
+  width: 100%;
+  padding: 8% 8%;
+  transform: translateY(3cqh);
 }
 
 .idle__eyebrow {
@@ -130,19 +138,30 @@ html:-webkit-full-screen body {
 }
 
 .idle__title {
-  font-size: clamp(2rem, 10cqi, 4.2rem);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  line-height: 1.05;
+  font-size: clamp(3rem, 18cqi, 6.2rem);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 0.9;
   color: var(--fwf-cream);
-  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  text-shadow:
+    0 0 2px rgba(255, 248, 240, 0.55),
+    0 10px 30px rgba(0, 0, 0, 0.72);
 }
 
 .idle__hint {
-  margin-top: 1.2rem;
-  font-size: clamp(0.85rem, 3cqi, 1.15rem);
-  letter-spacing: 0.06em;
-  color: rgba(255, 248, 240, 0.72);
+  display: inline-block;
+  max-width: min(76cqi, 34rem);
+  margin-top: clamp(0.9rem, 2.2cqh, 1.5rem);
+  padding: 0;
+  color: rgba(255, 248, 240, 0.94);
+  font-size: clamp(1.05rem, 6.2cqi, 2rem);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.08;
+  text-shadow:
+    0 0 2px rgba(255, 248, 240, 0.45),
+    0 3px 0 rgba(0, 0, 0, 0.72),
+    0 8px 22px rgba(0, 0, 0, 0.9);
 }
 
 .photo,
@@ -151,6 +170,7 @@ html:-webkit-full-screen body {
 }
 
 .photo__image,
+.frame-preview__live,
 .frame-preview__image {
   width: 100%;
   height: 100%;
@@ -158,23 +178,37 @@ html:-webkit-full-screen body {
   object-position: center;
   background: #000;
   display: block;
+  image-rendering: auto;
 }
 
-.frame-preview::before {
-  content: "";
+.frame-preview__live,
+.frame-preview__image {
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(180deg, rgba(20, 14, 10, 0.18), rgba(20, 14, 10, 0.44)),
-    url("/vincom/S5.jpg");
-  background-size: cover;
-  background-position: center;
-  opacity: 0.58;
 }
 
 .frame-preview__image {
-  position: relative;
   z-index: 1;
+  background: transparent;
+}
+
+.camera-status {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
+  color: #fff8f0;
+  font-size: clamp(0.8rem, 4cqi, 1.1rem);
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.85);
+}
+
+.camera-status[hidden] {
+  display: none;
 }
 
 @keyframes breathe {

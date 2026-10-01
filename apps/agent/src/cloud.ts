@@ -31,6 +31,8 @@ export async function uploadProcessedPhoto(input: {
   filePath: string;
   originalFilename: string;
   processedFilename: string;
+  sessionId?: string | null;
+  sessionCode?: string | null;
 }): Promise<{
   assigned: boolean;
   sessionCode: string | null;
@@ -40,6 +42,8 @@ export async function uploadProcessedPhoto(input: {
   const form = new FormData();
   form.set("originalFilename", input.originalFilename);
   form.set("processedFilename", input.processedFilename);
+  if (input.sessionId) form.set("sessionId", input.sessionId);
+  if (input.sessionCode) form.set("sessionCode", input.sessionCode);
   form.set(
     "file",
     new File([new Uint8Array(bytes)], input.processedFilename, { type: "image/jpeg" }),

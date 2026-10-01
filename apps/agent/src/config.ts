@@ -14,9 +14,10 @@ export const config = {
   framesDir: join(dataDir, "frames"),
   logsDir: join(dataDir, "logs"),
   framePath: join(dataDir, "frames", "default.png"),
-  // Portrait LED frame — 8:16 (1080 × 2160)
-  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 1080),
-  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 2160),
+  // Portrait LED frame — 96:128 panel, rendered at 10x for image quality.
+  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 960),
+  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1280),
+  photoFit: process.env.FWF_PHOTO_FIT === "contain" ? "contain" : "cover",
   jpegQuality: Number(process.env.FWF_JPEG_QUALITY ?? 90),
   transferPollMs: Number(process.env.FWF_TRANSFER_POLL_MS ?? 300),
   transferStableChecks: Number(process.env.FWF_TRANSFER_STABLE_CHECKS ?? 3),

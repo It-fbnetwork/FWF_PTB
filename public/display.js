@@ -5,14 +5,18 @@ const idleEl = document.getElementById("idle");
 const photoEl = document.getElementById("photo");
 const imageEl = document.getElementById("photo-image");
 const framePreviewEl = document.getElementById("frame-preview");
+const framePreviewLiveEl = document.getElementById("frame-preview-live");
 const framePreviewImageEl = document.getElementById("frame-preview-image");
+const cameraStatusEl = document.getElementById("camera-status");
 
 if (
   !(idleEl instanceof HTMLElement) ||
   !(photoEl instanceof HTMLElement) ||
   !(imageEl instanceof HTMLImageElement) ||
   !(framePreviewEl instanceof HTMLElement) ||
-  !(framePreviewImageEl instanceof HTMLImageElement)
+  !(framePreviewLiveEl instanceof HTMLVideoElement) ||
+  !(framePreviewImageEl instanceof HTMLImageElement) ||
+  !(cameraStatusEl instanceof HTMLElement)
 ) {
   throw new Error("Display DOM is incomplete");
 }
@@ -24,6 +28,29 @@ let displayDurationMs = 8000;
 let fadeMs = 700;
 let since = new Date(Date.now() - 5_000).toISOString();
 const seen = new Set();
+let cameraStream = null;
+let cameraOpenAttempt = null;
+
+console.info("FWF display direct camera build: direct-camera-4");
+
+function setCameraStatus(message) {
+  cameraStatusEl.textContent = message;
+  cameraStatusEl.hidden = !message;
+}
+
+function configureLedCanvas() {
+  const params = new URLSearchParams(window.location.search);
+  const size = params.get("led") ?? params.get("size") ?? "";
+  const sizeMatch = size.match(/^(\d{2,5})x(\d{2,5})$/i);
+  const width = Number(params.get("w") ?? sizeMatch?.[1] ?? 86);
+  const height = Number(params.get("h") ?? sizeMatch?.[2] ?? 172);
+
+  if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+
+  document.documentElement.style.setProperty("--led-w", String(width));
+  document.documentElement.style.setProperty("--led-h", String(height));
+  document.documentElement.dataset.ledCanvas = `${width}x${height}`;
+}
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -45,6 +72,7 @@ async function fadeToIdle() {
   photoEl.hidden = true;
   framePreviewEl.hidden = true;
   imageEl.removeAttribute("src");
+  framePreviewImageEl.removeAttribute("src");
   idleEl.hidden = false;
   idleEl.classList.add("is-visible");
 }
@@ -68,12 +96,119 @@ async function showPhoto(url) {
 async function showFramePreview(frameUrl) {
   if (busy) return;
   await preload(frameUrl);
+  void ensureCameraStream();
   framePreviewImageEl.src = frameUrl;
   framePreviewEl.hidden = false;
   photoEl.classList.remove("is-visible");
   idleEl.classList.remove("is-visible");
   void framePreviewEl.offsetWidth;
   framePreviewEl.classList.add("is-visible");
+}
+
+async function findVideoDevice() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  const videoInputs = devices.filter((device) => device.kind === "videoinput");
+  const labels = videoInputs.map((device) => device.label || "(camera without permission)");
+  console.info("FWF camera inputs:", labels);
+  const cameraQuery = new URLSearchParams(window.location.search).get("camera")?.trim();
+  const preferred = videoInputs.find((device) =>
+    cameraQuery
+      ? device.label.toLowerCase().includes(cameraQuery.toLowerCase())
+      : /cam link|sony|zv|e10|usb|capture|uvc/i.test(device.label),
+  );
+  return {
+    deviceId: preferred?.deviceId ?? (!cameraQuery ? videoInputs[0]?.deviceId : null) ?? null,
+    labels,
+    requiredLabel: cameraQuery ?? "",
+  };
+}
+
+function withTimeout(promise, ms, onTimeout) {
+  let timeoutId = 0;
+  const timeout = new Promise((resolve) => {
+    timeoutId = window.setTimeout(() => {
+      onTimeout();
+      resolve(null);
+    }, ms);
+  });
+
+  return Promise.race([promise, timeout]).finally(() => {
+    window.clearTimeout(timeoutId);
+  });
+}
+
+async function ensureCameraStream() {
+  if (cameraStream) return;
+  if (cameraOpenAttempt) {
+    await cameraOpenAttempt;
+    return;
+  }
+  if (!navigator.mediaDevices?.getUserMedia) {
+    setCameraStatus("Chrome không thấy camera input.");
+    return;
+  }
+
+  cameraOpenAttempt = (async () => {
+    setCameraStatus("Đang mở camera Sony...");
+    let cameraDevice = await findVideoDevice();
+    const needsPermissionProbe = cameraDevice.labels.length === 0 || cameraDevice.labels.every((label) => label === "(camera without permission)");
+    if (needsPermissionProbe || (!cameraDevice.deviceId && cameraDevice.requiredLabel)) {
+      const initial = await withTimeout(
+        navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            frameRate: { ideal: 30, max: 60 },
+          },
+          audio: false,
+        }),
+        8000,
+        () => {
+          setCameraStatus("Không nhận được tín hiệu camera. Chọn Cam Link 4K và cho phép camera trong Chrome.");
+        },
+      );
+      if (!(initial instanceof MediaStream)) return;
+      initial.getTracks().forEach((track) => track.stop());
+      cameraDevice = await findVideoDevice();
+    }
+
+    if (!cameraDevice.deviceId) {
+      const seenLabels = cameraDevice.labels.length > 0 ? cameraDevice.labels.join(", ") : "không có camera nào";
+      const required = cameraDevice.requiredLabel || "Cam Link/Sony";
+      setCameraStatus(`Chrome chưa thấy "${required}". Đang thấy: ${seenLabels}`);
+      return;
+    }
+
+    const initial = await withTimeout(
+      navigator.mediaDevices.getUserMedia({
+        video: {
+          deviceId: { exact: cameraDevice.deviceId },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+          frameRate: { ideal: 30, max: 60 },
+        },
+        audio: false,
+      }),
+      8000,
+      () => {
+        setCameraStatus("Không nhận được tín hiệu camera. Chọn Cam Link 4K và cho phép camera trong Chrome.");
+      },
+    );
+    if (!(initial instanceof MediaStream)) return;
+    cameraStream = initial;
+    framePreviewLiveEl.srcObject = cameraStream;
+    await framePreviewLiveEl.play();
+    setCameraStatus("");
+  })();
+
+  try {
+    await cameraOpenAttempt;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    setCameraStatus(message || "Chrome không mở được camera.");
+  } finally {
+    if (!cameraStream) cameraOpenAttempt = null;
+  }
 }
 
 async function clearFramePreview() {
@@ -176,7 +311,9 @@ function startIdleSlideshow() {
   }, 5000);
 }
 
+configureLedCanvas();
 await loadConfig();
+void ensureCameraStream();
 enterFullscreenOnGesture();
 startIdleSlideshow();
 await pollPhotos();

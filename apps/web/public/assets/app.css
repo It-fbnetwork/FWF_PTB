@@ -20,6 +20,7 @@
 html,
 body {
   min-height: 100%;
+  width: 100%;
   max-width: 100%;
   overflow-x: hidden;
   background-color: #0f0a07;
@@ -51,6 +52,8 @@ a {
   z-index: 1;
   width: min(920px, calc(100% - 2rem));
   max-width: calc(100vw - 2rem);
+  min-width: 0;
+  overflow-x: hidden;
   margin: 0 auto;
   padding: 2rem 0 3rem;
 }
@@ -166,28 +169,26 @@ h1 {
   background: var(--fwf-card);
   border: 1px solid var(--fwf-line);
   border-radius: 18px;
+  min-width: 0;
   max-width: 100%;
   padding: 1.25rem;
 }
 
 .frame-picker {
+  display: block;
   border: 0;
   margin: 0.15rem 0 1rem;
   width: 100%;
+  min-width: 0;
   min-inline-size: 0;
   max-width: 100%;
   overflow-x: auto;
-  scrollbar-width: none;
   overscroll-behavior-x: contain;
   padding: 0 0.05rem 0.55rem;
   scroll-padding-inline: 0.05rem;
   scroll-snap-type: x mandatory;
   white-space: nowrap;
   -webkit-overflow-scrolling: touch;
-}
-
-.frame-picker::-webkit-scrollbar {
-  display: none;
 }
 
 .frame-picker legend {
@@ -214,7 +215,7 @@ h1 {
 
 .frame-choice span {
   display: block;
-  aspect-ratio: 8 / 16;
+  aspect-ratio: 96 / 128;
   overflow: hidden;
   border-radius: 10px;
   border: 2px solid rgba(255, 248, 240, 0.16);
@@ -528,9 +529,9 @@ input:focus {
   place-items: center;
   align-content: center;
   gap: 0.9rem;
-  aspect-ratio: 9 / 16;
+  aspect-ratio: 96 / 128;
   width: 100%;
-  max-width: 280px;
+  max-width: min(360px, 78vw);
   margin-inline: auto;
   border-radius: 14px;
   border: 1.5px dashed rgba(244, 162, 97, 0.55);
@@ -549,13 +550,13 @@ input:focus {
 
 .photo-preview {
   width: 100%;
-  max-width: 280px;
+  max-width: min(360px, 78vw);
   margin-inline: auto;
   border-radius: 14px;
   border: 1px solid var(--fwf-line);
   display: block;
-  aspect-ratio: 9 / 16;
-  object-fit: cover;
+  aspect-ratio: 96 / 128;
+  object-fit: contain;
   background: #000;
 }
 
