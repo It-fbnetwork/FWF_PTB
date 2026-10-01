@@ -98,6 +98,27 @@ function render(session) {
   }
 }
 
+async function previewFrame(frameId) {
+  const res = await fetch("/api/display/frame-preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ frameId }),
+  });
+  if (!res.ok) throw new Error("Không thể gửi frame sang màn hình display");
+}
+
+function clearFramePreview() {
+  const body = JSON.stringify({ action: "clear" });
+  const blob = new Blob([body], { type: "application/json" });
+  if (navigator.sendBeacon?.("/api/display/frame-preview", blob)) return;
+  void fetch("/api/display/frame-preview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
 async function updateFrame(frameId) {
   setFrameLoading(true);
   try {
@@ -110,6 +131,7 @@ async function updateFrame(frameId) {
     const json = text ? JSON.parse(text) : {};
     if (!res.ok) throw new Error(json.error || "Không thể chọn frame");
     render(json.session);
+    await previewFrame(frameId);
   } finally {
     setFrameLoading(false);
   }
@@ -134,6 +156,10 @@ setInterval(() => {
     console.warn("Session refresh failed", error);
   });
 }, 2000);
+window.addEventListener("pagehide", clearFramePreview);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") clearFramePreview();
+});
 
 frameStepEl.addEventListener("change", (event) => {
   const target = event.target;
