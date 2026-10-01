@@ -151,6 +151,12 @@ async function refresh() {
 }
 
 await refresh();
+const initialFrameInput = frameStepEl.querySelector('input[name="selectedFrameId"]:checked');
+if (initialFrameInput instanceof HTMLInputElement) {
+  void previewFrame(initialFrameInput.value).catch((error) => {
+    console.warn("Initial frame preview failed", error);
+  });
+}
 setInterval(() => {
   void refresh().catch((error) => {
     console.warn("Session refresh failed", error);
