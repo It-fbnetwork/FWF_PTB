@@ -22,6 +22,11 @@
           <span class="frame-loading__spinner" aria-hidden="true"></span>
           <span>Đang chọn frame…</span>
         </div>
+        <div id="frame-preview" class="session-frame-preview" aria-label="Xem truoc frame">
+          <video id="frame-preview-live" class="session-frame-preview__live" autoplay playsinline muted></video>
+          <img id="frame-preview-image" class="session-frame-preview__image" alt="Frame dang chon" />
+          <div id="camera-status" class="session-camera-status" hidden></div>
+        </div>
         <fieldset class="frame-picker" aria-label="Chọn frame chụp ảnh">
           <legend>Chọn frame ảnh</legend>
           <label class="frame-choice">

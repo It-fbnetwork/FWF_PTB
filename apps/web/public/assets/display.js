@@ -31,7 +31,7 @@ const seen = new Set();
 let cameraStream = null;
 let cameraOpenAttempt = null;
 
-console.info("FWF display direct camera build: direct-camera-4");
+console.info("FWF display direct camera build: direct-camera-5");
 
 function setCameraStatus(message) {
   cameraStatusEl.textContent = message;
@@ -131,10 +131,7 @@ function withTimeout(promise, ms, onTimeout) {
       resolve(null);
     }, ms);
   });
-
-  return Promise.race([promise, timeout]).finally(() => {
-    window.clearTimeout(timeoutId);
-  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timeoutId));
 }
 
 async function ensureCameraStream() {
@@ -151,35 +148,28 @@ async function ensureCameraStream() {
   cameraOpenAttempt = (async () => {
     setCameraStatus("Đang mở camera Sony...");
     let cameraDevice = await findVideoDevice();
-    const needsPermissionProbe = cameraDevice.labels.length === 0 || cameraDevice.labels.every((label) => label === "(camera without permission)");
-    if (needsPermissionProbe || (!cameraDevice.deviceId && cameraDevice.requiredLabel)) {
-      const initial = await withTimeout(
+    const labelsHidden = cameraDevice.labels.length === 0 || cameraDevice.labels.every((label) => label === "(camera without permission)");
+    if (labelsHidden || (!cameraDevice.deviceId && cameraDevice.requiredLabel)) {
+      const probe = await withTimeout(
         navigator.mediaDevices.getUserMedia({
-          video: {
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
-            frameRate: { ideal: 30, max: 60 },
-          },
+          video: { width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30, max: 60 } },
           audio: false,
         }),
         8000,
-        () => {
-          setCameraStatus("Không nhận được tín hiệu camera. Chọn Cam Link 4K và cho phép camera trong Chrome.");
-        },
+        () => setCameraStatus("Không nhận được tín hiệu camera. Chọn Cam Link 4K và cho phép camera trong Chrome."),
       );
-      if (!(initial instanceof MediaStream)) return;
-      initial.getTracks().forEach((track) => track.stop());
+      if (!(probe instanceof MediaStream)) return;
+      probe.getTracks().forEach((track) => track.stop());
       cameraDevice = await findVideoDevice();
     }
 
     if (!cameraDevice.deviceId) {
-      const seenLabels = cameraDevice.labels.length > 0 ? cameraDevice.labels.join(", ") : "không có camera nào";
-      const required = cameraDevice.requiredLabel || "Cam Link/Sony";
-      setCameraStatus(`Chrome chưa thấy "${required}". Đang thấy: ${seenLabels}`);
+      const labels = cameraDevice.labels.length > 0 ? cameraDevice.labels.join(", ") : "không có camera nào";
+      setCameraStatus(`Chrome chưa thấy "${cameraDevice.requiredLabel || "Cam Link/Sony"}". Đang thấy: ${labels}`);
       return;
     }
 
-    const initial = await withTimeout(
+    const stream = await withTimeout(
       navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: cameraDevice.deviceId },
@@ -190,12 +180,10 @@ async function ensureCameraStream() {
         audio: false,
       }),
       8000,
-      () => {
-        setCameraStatus("Không nhận được tín hiệu camera. Chọn Cam Link 4K và cho phép camera trong Chrome.");
-      },
+      () => setCameraStatus("Không nhận được tín hiệu camera. Chọn Cam Link 4K và cho phép camera trong Chrome."),
     );
-    if (!(initial instanceof MediaStream)) return;
-    cameraStream = initial;
+    if (!(stream instanceof MediaStream)) return;
+    cameraStream = stream;
     framePreviewLiveEl.srcObject = cameraStream;
     await framePreviewLiveEl.play();
     setCameraStatus("");
@@ -204,8 +192,7 @@ async function ensureCameraStream() {
   try {
     await cameraOpenAttempt;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    setCameraStatus(message || "Chrome không mở được camera.");
+    setCameraStatus(error instanceof Error ? error.message : String(error));
   } finally {
     if (!cameraStream) cameraOpenAttempt = null;
   }

@@ -4,8 +4,8 @@ import { join } from "node:path";
 const dataDir = process.env.FWF_DATA_DIR ?? join(homedir(), "FWF_PhotoBooth");
 
 export const config = {
-  apiUrl: (process.env.FWF_API_URL ?? "http://localhost:3010").replace(/\/$/, ""),
-  agentToken: process.env.FWF_AGENT_TOKEN ?? "",
+  apiUrl: (process.env.FWF_API_URL ?? "https://ptb.facewashfox.com").replace(/\/$/, ""),
+  agentToken: process.env.FWF_AGENT_TOKEN ?? process.env.AGENT_TOKEN ?? "",
   watchDir: process.env.FWF_WATCH_DIR ?? join(homedir(), "Pictures"),
   dataDir,
   incomingDir: join(dataDir, "incoming"),
@@ -14,9 +14,9 @@ export const config = {
   framesDir: join(dataDir, "frames"),
   logsDir: join(dataDir, "logs"),
   framePath: join(dataDir, "frames", "default.png"),
-  // Portrait LED frame — 96:128 panel, rendered at 10x for image quality.
-  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 960),
-  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1280),
+  // Supplied portrait artwork is 9:16 (4500×8000); render at one-fifth scale.
+  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 900),
+  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1600),
   photoFit: process.env.FWF_PHOTO_FIT === "contain" ? "contain" : "cover",
   jpegQuality: Number(process.env.FWF_JPEG_QUALITY ?? 90),
   transferPollMs: Number(process.env.FWF_TRANSFER_POLL_MS ?? 300),

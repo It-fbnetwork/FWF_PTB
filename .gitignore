@@ -10,3 +10,5 @@ dist/
 apps/web/.next/
 apps/web/tsconfig.tsbuildinfo
 apps/agent/data/
+.vercel
+.env*
