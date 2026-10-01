@@ -27,6 +27,20 @@ export async function fetchActiveSession(): Promise<ActiveSession> {
   return json.activeSession ?? null;
 }
 
+export async function claimCaptureCommand(): Promise<{
+  id: string;
+  sessionCode: string;
+  countdownMs: number;
+} | null> {
+  const res = await agentFetch("/api/agent/capture-command");
+  const json = (await res.json()) as {
+    command?: { id: string; sessionCode: string; countdownMs: number } | null;
+    error?: string;
+  };
+  if (!res.ok) throw new Error(json.error || `capture-command failed (${res.status})`);
+  return json.command ?? null;
+}
+
 export async function uploadProcessedPhoto(input: {
   filePath: string;
   originalFilename: string;

@@ -244,6 +244,20 @@ h1 {
   margin-bottom: 1rem;
 }
 
+.capture-button {
+  margin-top: 1rem;
+  min-width: 12rem;
+}
+
+.capture-status {
+  min-height: 1.4em;
+  margin-top: 0.65rem;
+  color: var(--fwf-amber);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: center;
+}
+
 .frame-step.is-loading .frame-picker {
   opacity: 0.45;
   pointer-events: none;

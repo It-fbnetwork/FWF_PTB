@@ -8,6 +8,7 @@ const framePreviewEl = document.getElementById("frame-preview");
 const framePreviewLiveEl = document.getElementById("frame-preview-live");
 const framePreviewImageEl = document.getElementById("frame-preview-image");
 const cameraStatusEl = document.getElementById("camera-status");
+const captureCountdownEl = document.getElementById("capture-countdown");
 
 if (
   !(idleEl instanceof HTMLElement) ||
@@ -16,7 +17,8 @@ if (
   !(framePreviewEl instanceof HTMLElement) ||
   !(framePreviewLiveEl instanceof HTMLVideoElement) ||
   !(framePreviewImageEl instanceof HTMLImageElement) ||
-  !(cameraStatusEl instanceof HTMLElement)
+  !(cameraStatusEl instanceof HTMLElement) ||
+  !(captureCountdownEl instanceof HTMLElement)
 ) {
   throw new Error("Display DOM is incomplete");
 }
@@ -30,6 +32,7 @@ let since = new Date(Date.now() - 5_000).toISOString();
 const seen = new Set();
 let cameraStream = null;
 let cameraOpenAttempt = null;
+let lastCaptureRequest = "";
 
 console.info("FWF display direct camera build: direct-camera-5");
 
@@ -203,6 +206,20 @@ async function clearFramePreview() {
   await fadeToIdle();
 }
 
+async function showCaptureCountdown(createdAt) {
+  if (createdAt === lastCaptureRequest) return;
+  lastCaptureRequest = createdAt;
+  captureCountdownEl.hidden = false;
+  for (const value of ["3", "2", "1"]) {
+    captureCountdownEl.textContent = value;
+    await sleep(1000);
+  }
+  captureCountdownEl.textContent = "📸";
+  await sleep(450);
+  captureCountdownEl.hidden = true;
+  captureCountdownEl.textContent = "";
+}
+
 async function drainQueue() {
   if (busy) return;
   busy = true;
@@ -254,6 +271,10 @@ async function pollPhotos() {
     const res = await fetch(`/api/events/poll?since=${encodeURIComponent(since)}`);
     if (!res.ok) return;
     const data = await res.json();
+    for (const event of data.captureRequests ?? []) {
+      if (event?.createdAt) void showCaptureCountdown(event.createdAt);
+      if (event?.createdAt && event.createdAt > since) since = event.createdAt;
+    }
     for (const event of data.framePreviews ?? []) {
       if (event?.type === "frame_preview_clear") await clearFramePreview();
       else if (event?.frameUrl) await showFramePreview(event.frameUrl);

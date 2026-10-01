@@ -9,6 +9,8 @@ const actionsEl = document.getElementById("actions");
 const downloadEl = document.getElementById("download");
 const frameStepEl = document.getElementById("frame-step");
 const frameLoadingEl = document.getElementById("frame-loading");
+const captureButtonEl = document.getElementById("capture-button");
+const captureStatusEl = document.getElementById("capture-status");
 let refreshInFlight = false;
 
 if (
@@ -21,7 +23,9 @@ if (
   !(actionsEl instanceof HTMLElement) ||
   !(downloadEl instanceof HTMLAnchorElement) ||
   !(frameStepEl instanceof HTMLElement) ||
-  !(frameLoadingEl instanceof HTMLElement)
+  !(frameLoadingEl instanceof HTMLElement) ||
+  !(captureButtonEl instanceof HTMLButtonElement) ||
+  !(captureStatusEl instanceof HTMLElement)
 ) {
   throw new Error("Session DOM incomplete");
 }
@@ -45,6 +49,7 @@ function render(session) {
   statusEl.className = `status-pill ${statusClass(session.status)}`;
   nameEl.innerHTML = `<span class="guest-owner__label">Ảnh này của</span> <span class="guest-owner__name">${session.name}</span>`;
   const selectedFrameId = session.selectedFrameId || "frame-1";
+  captureButtonEl.disabled = session.status !== "READY" && session.status !== "SELECTED";
   const selectedFrameInput = frameStepEl.querySelector(
     `input[name="selectedFrameId"][value="${CSS.escape(selectedFrameId)}"]`,
   );
@@ -173,6 +178,23 @@ frameStepEl.addEventListener("change", (event) => {
     void updateFrame(target.value).catch((error) => {
       console.warn("Frame update failed", error);
     });
+  }
+});
+
+captureButtonEl.addEventListener("click", async () => {
+  captureButtonEl.disabled = true;
+  captureStatusEl.textContent = "Chuẩn bị chụp: 3… 2… 1…";
+  try {
+    const res = await fetch(`/api/sessions/code/${encodeURIComponent(code)}/capture`, { method: "POST" });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || "Không thể gửi lệnh chụp");
+    captureStatusEl.textContent = "Đã gửi lệnh chụp. Vui lòng nhìn vào camera!";
+    window.setTimeout(() => {
+      captureStatusEl.textContent = "Đang xử lý ảnh…";
+    }, 3500);
+  } catch (error) {
+    captureStatusEl.textContent = error instanceof Error ? error.message : String(error);
+    captureButtonEl.disabled = false;
   }
 });
 

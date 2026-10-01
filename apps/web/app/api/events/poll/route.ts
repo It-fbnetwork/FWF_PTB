@@ -1,5 +1,6 @@
 import { json } from "@/lib/auth";
 import { listRecentFramePreviewsSince, listRecentPhotosSince } from "@/lib/sessions";
+import { listCaptureRequestsSince } from "@/lib/capture-requests";
 
 export const runtime = "nodejs";
 
@@ -8,13 +9,15 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const since =
       url.searchParams.get("since") ?? new Date(Date.now() - 60_000).toISOString();
-    const [photos, framePreviews] = await Promise.all([
+    const [photos, framePreviews, captureRequests] = await Promise.all([
       listRecentPhotosSince(since),
       listRecentFramePreviewsSince(since),
+      listCaptureRequestsSince(since),
     ]);
     return json({
       serverTime: new Date().toISOString(),
       framePreviews,
+      captureRequests,
       photos: photos.map((p) => ({
         type: "photo_ready",
         filename: p.filename,

@@ -53,3 +53,14 @@ create table if not exists frame_preview_events (
 );
 
 create index if not exists frame_preview_events_created_at_idx on frame_preview_events (created_at desc);
+
+create table if not exists capture_requests (
+  id uuid primary key default gen_random_uuid(),
+  session_id uuid not null references sessions (id) on delete cascade,
+  status text not null default 'PENDING',
+  created_at timestamptz not null default now(),
+  claimed_at timestamptz null
+);
+
+create index if not exists capture_requests_status_created_idx
+  on capture_requests (status, created_at asc);

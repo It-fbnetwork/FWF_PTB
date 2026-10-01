@@ -1,6 +1,7 @@
 import { access, stat } from "node:fs/promises";
 import { basename, resolve } from "node:path";
-import { fetchActiveSession, pingCloud, type ActiveSession } from "./cloud.js";
+import { claimCaptureCommand, fetchActiveSession, pingCloud, type ActiveSession } from "./cloud.js";
+import { triggerCapture } from "./capture-trigger.js";
 import { config } from "./config.js";
 import { ensureLocalFolders } from "./ensure-dirs.js";
 import { ensureDefaultFrame } from "./ensure-frame.js";
@@ -143,6 +144,24 @@ async function main(): Promise<void> {
   log.info(`JPEG files that already exist in the watch folder will be ignored.`);
   log.info(`Cloud API: ${config.apiUrl}`);
   startWatcher(handleNewPhoto);
+
+  let capturePollBusy = false;
+  setInterval(() => {
+    if (capturePollBusy) return;
+    capturePollBusy = true;
+    void claimCaptureCommand()
+      .then(async (command) => {
+        if (!command) return;
+        log.info(`Capture command for session ${command.sessionCode}`);
+        await triggerCapture(command.countdownMs);
+      })
+      .catch((error) => {
+        log.warn(`Capture command failed: ${error instanceof Error ? error.message : String(error)}`);
+      })
+      .finally(() => {
+        capturePollBusy = false;
+      });
+  }, 500);
 }
 
 main().catch((error) => {

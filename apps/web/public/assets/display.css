@@ -227,6 +227,23 @@ html:-webkit-full-screen body {
   display: none;
 }
 
+.capture-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  color: #fff8f0;
+  font-size: clamp(7rem, 45cqi, 18rem);
+  font-weight: 900;
+  text-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.capture-countdown[hidden] {
+  display: none;
+}
+
 @keyframes breathe {
   0%,
   100% {
