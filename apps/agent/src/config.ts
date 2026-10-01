@@ -2,6 +2,8 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 const dataDir = process.env.FWF_DATA_DIR ?? join(homedir(), "FWF_PhotoBooth");
+const frameOutputWidth = 900;
+const frameOutputHeight = 1600;
 
 export const config = {
   apiUrl: (process.env.FWF_API_URL ?? "https://ptb.facewashfox.com").replace(/\/$/, ""),
@@ -14,9 +16,9 @@ export const config = {
   framesDir: join(dataDir, "frames"),
   logsDir: join(dataDir, "logs"),
   framePath: join(dataDir, "frames", "default.png"),
-  // Supplied portrait artwork is 9:16 (4500×8000); render at one-fifth scale.
-  outputWidth: Number(process.env.FWF_OUTPUT_WIDTH ?? 900),
-  outputHeight: Number(process.env.FWF_OUTPUT_HEIGHT ?? 1600),
+  // Supplied artwork is 4500×8000 (9:16). Keep output locked to the same ratio.
+  outputWidth: frameOutputWidth,
+  outputHeight: frameOutputHeight,
   photoFit: process.env.FWF_PHOTO_FIT === "contain" ? "contain" : "cover",
   jpegQuality: Number(process.env.FWF_JPEG_QUALITY ?? 90),
   transferPollMs: Number(process.env.FWF_TRANSFER_POLL_MS ?? 300),
