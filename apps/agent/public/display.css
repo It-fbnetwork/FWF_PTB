@@ -23,7 +23,7 @@ body {
   background: #0a0705;
   color: var(--fwf-cream);
   cursor: default;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Poppins", Arial, sans-serif;
 }
 
 html:fullscreen,

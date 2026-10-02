@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>FWF Operator</title>
-    <link rel="stylesheet" href="/assets/app.css" />
+    <link rel="stylesheet" href="/assets/fonts.css?v=poppins-1" />
+    <link rel="stylesheet" href="/assets/app.css?v=operator-tabs-1" />
   </head>
   <body>
     <main class="shell">
@@ -24,22 +25,45 @@
         <figure class="shot"><img src="/vincom/S5.jpg" alt="Khu vực chờ" loading="lazy" /></figure>
       </section>
 
-      <section id="active" class="active-banner" hidden></section>
+      <nav class="operator-tabs" role="tablist" aria-label="Operator sections">
+        <button id="waiting-tab" class="operator-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="waiting-panel" data-action="switch-tab" data-tab="waiting">
+          WAITING
+          <span id="waiting-count" class="operator-tab__count">0</span>
+        </button>
+        <button id="history-tab" class="operator-tab" type="button" role="tab" aria-selected="false" aria-controls="history-panel" data-action="switch-tab" data-tab="history">
+          HISTORY
+          <span id="history-tab-count" class="operator-tab__count">0</span>
+        </button>
+      </nav>
 
-      <section class="panel">
-        <h2 style="font-size: 1rem; letter-spacing: 0.08em; margin-bottom: 1rem; color: var(--fwf-amber)">
-          WAITING QUEUE
-        </h2>
-        <div id="queue" class="queue"></div>
-        <p id="empty" class="empty" hidden>Chưa có khách check-in.</p>
-      </section>
+      <div id="waiting-panel" class="operator-tab-panel" role="tabpanel" aria-labelledby="waiting-tab">
+        <section id="active" class="active-banner" hidden></section>
 
-      <section class="panel" style="margin-top: 1rem">
-        <h2 style="font-size: 1rem; letter-spacing: 0.08em; margin-bottom: 1rem; color: var(--fwf-amber)">
-          RECENT / OTHER
-        </h2>
-        <div id="recent" class="queue"></div>
-      </section>
+        <section class="panel">
+          <h2 class="section-title" style="margin-bottom: 1rem">WAITING QUEUE</h2>
+          <div id="queue" class="queue"></div>
+          <p id="empty" class="empty" hidden>Chưa có khách check-in.</p>
+        </section>
+
+        <section class="panel" style="margin-top: 1rem">
+          <h2 class="section-title" style="margin-bottom: 1rem">RECENT / OTHER</h2>
+          <div id="recent" class="queue"></div>
+        </section>
+      </div>
+
+      <div id="history-panel" class="operator-tab-panel" role="tabpanel" aria-labelledby="history-tab" hidden>
+        <section class="panel">
+          <div class="history-heading">
+            <div>
+              <h2 class="section-title">LỊCH SỬ CHỤP</h2>
+              <p class="queue-sub">Ảnh được sắp xếp từ mới nhất. Có thể xem hoặc tải trực tiếp về máy.</p>
+            </div>
+            <span id="history-count" class="status-pill"></span>
+          </div>
+          <div id="history" class="photo-history"></div>
+          <p id="history-empty" class="empty" hidden>Chưa có ảnh nào được chụp.</p>
+        </section>
+      </div>
     </main>
 
     <div id="photo-modal" class="photo-modal" hidden>
@@ -57,6 +81,6 @@
       </div>
     </div>
 
-    <script src="/assets/operator.js" type="module"></script>
+    <script src="/assets/operator.js?v=photo-delete-1" type="module"></script>
   </body>
 </html>

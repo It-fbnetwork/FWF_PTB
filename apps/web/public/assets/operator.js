@@ -2,6 +2,15 @@ const activeEl = document.getElementById("active");
 const queueEl = document.getElementById("queue");
 const recentEl = document.getElementById("recent");
 const emptyEl = document.getElementById("empty");
+const historyEl = document.getElementById("history");
+const historyEmptyEl = document.getElementById("history-empty");
+const historyCountEl = document.getElementById("history-count");
+const waitingCountEl = document.getElementById("waiting-count");
+const historyTabCountEl = document.getElementById("history-tab-count");
+const waitingPanelEl = document.getElementById("waiting-panel");
+const historyPanelEl = document.getElementById("history-panel");
+const waitingTabEl = document.getElementById("waiting-tab");
+const historyTabEl = document.getElementById("history-tab");
 const photoModal = document.getElementById("photo-modal");
 const photoModalTitle = document.getElementById("photo-modal-title");
 const photoModalSub = document.getElementById("photo-modal-sub");
@@ -12,6 +21,15 @@ if (
   !(queueEl instanceof HTMLElement) ||
   !(recentEl instanceof HTMLElement) ||
   !(emptyEl instanceof HTMLElement) ||
+  !(historyEl instanceof HTMLElement) ||
+  !(historyEmptyEl instanceof HTMLElement) ||
+  !(historyCountEl instanceof HTMLElement) ||
+  !(waitingCountEl instanceof HTMLElement) ||
+  !(historyTabCountEl instanceof HTMLElement) ||
+  !(waitingPanelEl instanceof HTMLElement) ||
+  !(historyPanelEl instanceof HTMLElement) ||
+  !(waitingTabEl instanceof HTMLButtonElement) ||
+  !(historyTabEl instanceof HTMLButtonElement) ||
   !(photoModal instanceof HTMLElement) ||
   !(photoModalTitle instanceof HTMLElement) ||
   !(photoModalSub instanceof HTMLElement) ||
@@ -21,6 +39,21 @@ if (
 }
 
 const PIN_KEY = "fwf_operator_pin";
+const TAB_KEY = "fwf_operator_tab";
+
+function setActiveTab(tab) {
+  const activeTab = tab === "history" ? "history" : "waiting";
+  const showHistory = activeTab === "history";
+  waitingPanelEl.hidden = showHistory;
+  historyPanelEl.hidden = !showHistory;
+  waitingTabEl.classList.toggle("is-active", !showHistory);
+  historyTabEl.classList.toggle("is-active", showHistory);
+  waitingTabEl.setAttribute("aria-selected", String(!showHistory));
+  historyTabEl.setAttribute("aria-selected", String(showHistory));
+  sessionStorage.setItem(TAB_KEY, activeTab);
+}
+
+setActiveTab(sessionStorage.getItem(TAB_KEY));
 
 function getPin() {
   let pin = sessionStorage.getItem(PIN_KEY);
@@ -61,12 +94,55 @@ function pill(status) {
 
 function selectedPhotos(session) {
   const photos = Array.isArray(session.photos) ? session.photos : [];
-  if (photos.length === 0) return [];
-  if (session.selectedPhotoId) {
-    const selected = photos.filter((p) => p.id === session.selectedPhotoId);
-    if (selected.length > 0) return selected;
-  }
   return photos;
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
+
+function renderHistory() {
+  const entries = snapshot.sessions
+    .flatMap((session) =>
+      (Array.isArray(session.photos) ? session.photos : []).map((photo) => ({ session, photo })),
+    )
+    .sort((a, b) => new Date(b.photo.createdAt).getTime() - new Date(a.photo.createdAt).getTime());
+
+  historyEmptyEl.hidden = entries.length > 0;
+  historyEmptyEl.textContent = "Chưa có ảnh nào được chụp.";
+  historyCountEl.hidden = entries.length === 0;
+  historyCountEl.textContent = `${entries.length} ẢNH`;
+  historyTabCountEl.textContent = String(entries.length);
+  historyEl.innerHTML = entries
+    .map(({ session, photo }) => {
+      const label = photo.processedFilename || "fwf-photo.jpg";
+      return `
+        <article class="history-card">
+          <button class="history-card__preview" type="button" data-action="view-photos" data-id="${session.id}" aria-label="Xem ảnh của ${escapeHtml(session.name)}">
+            <img src="${escapeHtml(photo.url)}" alt="Ảnh của ${escapeHtml(session.name)}" loading="lazy" />
+          </button>
+          <div class="history-card__body">
+            <span class="queue-name history-card__name">${escapeHtml(session.name)}</span>
+            <span class="queue-sub">${escapeHtml(session.phone)} · ${escapeHtml(session.code)}</span>
+            <span class="queue-sub">${escapeHtml(formatDate(photo.createdAt))}</span>
+            <div class="btn-row history-card__actions">
+              <button class="btn btn--ghost" type="button" data-action="view-photos" data-id="${session.id}">XEM</button>
+              <button class="btn" type="button" data-action="download-photo" data-photo-id="${photo.id}" data-filename="${escapeHtml(label)}">TẢI ẢNH</button>
+              <button class="btn btn--danger" type="button" data-action="delete-photo" data-photo-id="${photo.id}" data-filename="${escapeHtml(label)}" data-customer="${escapeHtml(session.name)}">XÓA</button>
+            </div>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
 }
 
 function viewPhotoButton(session) {
@@ -91,7 +167,10 @@ function openPhotoModal(session) {
           <img src="${escapeHtml(photo.url)}" alt="${escapeHtml(label)}" />
           <div class="photo-modal__meta">
             <span class="queue-sub">${escapeHtml(label)}</span>
-            <a class="btn btn--ghost" href="${escapeHtml(photo.url)}" target="_blank" rel="noopener">MỞ / TẢI</a>
+            <div class="btn-row">
+              <a class="btn btn--ghost" href="${escapeHtml(photo.url)}" target="_blank" rel="noopener">MỞ</a>
+              <button class="btn" type="button" data-action="download-photo" data-photo-id="${photo.id}" data-filename="${escapeHtml(label)}">TẢI ẢNH</button>
+            </div>
           </div>
         </article>
       `;
@@ -191,11 +270,13 @@ function canPrepare(session) {
 
 function render() {
   renderActive(snapshot.activeSession);
+  renderHistory();
 
   const waiting = snapshot.sessions.filter((s) => s.status === "WAITING");
   const others = snapshot.sessions.filter((s) => s.status !== "WAITING").slice(0, 20);
 
   emptyEl.hidden = waiting.length > 0;
+  waitingCountEl.textContent = String(waiting.length);
   queueEl.innerHTML = waiting.map((s) => renderItem(s, { showPrepare: true })).join("");
   recentEl.innerHTML =
     others.length > 0
@@ -208,12 +289,84 @@ async function refresh() {
   render();
 }
 
+function showRefreshError(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  historyEl.innerHTML = "";
+  historyCountEl.hidden = true;
+  historyEmptyEl.hidden = false;
+  historyEmptyEl.textContent = `Không tải được lịch sử: ${message}`;
+}
+
 document.addEventListener("click", async (event) => {
-  const target = event.target;
+  const eventTarget = event.target;
+  if (!(eventTarget instanceof HTMLElement)) return;
+  const target = eventTarget.closest("[data-action]") ?? eventTarget;
   if (!(target instanceof HTMLElement)) return;
 
   if (target.dataset.action === "close-modal") {
     closePhotoModal();
+    return;
+  }
+
+  if (target.dataset.action === "switch-tab") {
+    setActiveTab(target.dataset.tab);
+    return;
+  }
+
+  if (target.dataset.action === "download-photo") {
+    const photoId = target.dataset.photoId;
+    if (!photoId) return;
+    target.setAttribute("disabled", "true");
+    const originalText = target.textContent;
+    target.textContent = "ĐANG TẢI...";
+    try {
+      const pin = getPin();
+      const res = await fetch(`/api/photos/${encodeURIComponent(photoId)}/download`, {
+        headers: { "x-operator-pin": pin },
+      });
+      if (res.status === 401) sessionStorage.removeItem(PIN_KEY);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || "Không tải được ảnh");
+      }
+      const blobUrl = URL.createObjectURL(await res.blob());
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = target.dataset.filename || "fwf-photo.jpg";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1_000);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : String(error));
+    } finally {
+      target.removeAttribute("disabled");
+      target.textContent = originalText;
+    }
+    return;
+  }
+
+  if (target.dataset.action === "delete-photo") {
+    const photoId = target.dataset.photoId;
+    if (!photoId) return;
+    const filename = target.dataset.filename || "ảnh này";
+    const customer = target.dataset.customer || "khách";
+    const confirmed = window.confirm(
+      `Xóa vĩnh viễn ${filename} của ${customer}?\n\nẢnh sẽ bị xóa khỏi lịch sử và Cloudflare R2. Thao tác này không thể hoàn tác.`,
+    );
+    if (!confirmed) return;
+
+    target.setAttribute("disabled", "true");
+    const originalText = target.textContent;
+    target.textContent = "ĐANG XÓA...";
+    try {
+      await api(`/api/photos/${encodeURIComponent(photoId)}`, "DELETE");
+      await refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : String(error));
+      target.removeAttribute("disabled");
+      target.textContent = originalText;
+    }
     return;
   }
 
@@ -248,7 +401,11 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !photoModal.hidden) closePhotoModal();
 });
 
-await refresh();
+try {
+  await refresh();
+} catch (error) {
+  showRefreshError(error);
+}
 setInterval(() => {
-  void refresh().catch(() => undefined);
+  void refresh().catch(showRefreshError);
 }, 2500);

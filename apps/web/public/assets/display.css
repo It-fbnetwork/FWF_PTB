@@ -23,7 +23,14 @@ body {
   background: #0a0705;
   color: var(--fwf-cream);
   cursor: default;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Poppins", Arial, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
 }
 
 html:fullscreen,
@@ -138,6 +145,7 @@ html:-webkit-full-screen body {
 }
 
 .idle__title {
+  font-family: "Poppins", Arial, sans-serif;
   font-size: clamp(3rem, 18cqi, 6.2rem);
   font-weight: 900;
   letter-spacing: 0.02em;
@@ -150,18 +158,18 @@ html:-webkit-full-screen body {
 
 .idle__hint {
   display: inline-block;
+  font-family: "Poppins", Arial, sans-serif;
   max-width: min(76cqi, 34rem);
   margin-top: clamp(0.9rem, 2.2cqh, 1.5rem);
   padding: 0;
   color: rgba(255, 248, 240, 0.94);
   font-size: clamp(1.05rem, 6.2cqi, 2rem);
-  font-weight: 800;
+  font-weight: 700;
   letter-spacing: 0;
-  line-height: 1.08;
+  line-height: 1.16;
   text-shadow:
-    0 0 2px rgba(255, 248, 240, 0.45),
-    0 3px 0 rgba(0, 0, 0, 0.72),
-    0 8px 22px rgba(0, 0, 0, 0.9);
+    0 2px 5px rgba(0, 0, 0, 0.82),
+    0 8px 20px rgba(0, 0, 0, 0.72);
 }
 
 .photo,

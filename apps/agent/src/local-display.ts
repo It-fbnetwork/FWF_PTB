@@ -46,7 +46,9 @@ async function serveFile(res: ServerResponse, filePath: string): Promise<void> {
           ? "text/html; charset=utf-8"
           : extname(filePath).toLowerCase() === ".png"
             ? "image/png"
-            : "image/jpeg";
+            : extname(filePath).toLowerCase() === ".woff2"
+              ? "font/woff2"
+              : "image/jpeg";
   res.writeHead(200, { "Content-Type": mime, "Cache-Control": "no-store" });
   createReadStream(filePath).pipe(res);
 }
@@ -115,6 +117,16 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
     const name = decodeURIComponent(path.slice("/assets/".length));
     const filePath = resolve(join(publicDir, name));
     if (!isInside(publicDir, filePath)) {
+      send(res, 403, "Forbidden", "text/plain; charset=utf-8");
+      return;
+    }
+    await serveFile(res, filePath);
+    return;
+  }
+  if (req.method === "GET" && path.startsWith("/fonts/")) {
+    const name = decodeURIComponent(path.slice("/fonts/".length));
+    const filePath = resolve(join(publicDir, "fonts", name));
+    if (!isInside(join(publicDir, "fonts"), filePath)) {
       send(res, 403, "Forbidden", "text/plain; charset=utf-8");
       return;
     }

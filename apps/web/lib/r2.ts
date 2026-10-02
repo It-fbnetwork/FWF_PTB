@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 let client: S3Client | null = null;
 
@@ -44,4 +44,13 @@ export async function uploadPhotoObject(input: {
     key: input.key,
     publicUrl: `${publicBase}/${input.key}`,
   };
+}
+
+export async function deletePhotoObject(key: string): Promise<void> {
+  await getR2Client().send(
+    new DeleteObjectCommand({
+      Bucket: requireEnv("R2_BUCKET"),
+      Key: key,
+    }),
+  );
 }

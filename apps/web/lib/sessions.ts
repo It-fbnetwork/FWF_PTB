@@ -1,6 +1,6 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { query, queryOne } from "./db";
-import { uploadPhotoObject } from "./r2";
+import { getPool, query, queryOne } from "./db";
+import { deletePhotoObject, uploadPhotoObject } from "./r2";
 import type { PhotoSession, SessionPhoto, SessionStatus, UnassignedPhoto } from "./types";
 
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -203,6 +203,57 @@ export async function getUnassignedPhotos(): Promise<UnassignedPhoto[]> {
       createdAt: photo.createdAt,
     };
   });
+}
+
+export async function getPhotoById(id: string): Promise<SessionPhoto | null> {
+  const row = await queryOne<PhotoRow>(`select * from photos where id = $1`, [id]);
+  return row ? mapPhoto(row) : null;
+}
+
+export async function deletePhotoById(id: string): Promise<boolean> {
+  const photo = await queryOne<PhotoRow>(`select * from photos where id = $1`, [id]);
+  if (!photo) return false;
+
+  await deletePhotoObject(photo.storage_path);
+
+  const client = await getPool().connect();
+  try {
+    await client.query("begin");
+    if (photo.session_id) {
+      await client.query(
+        `update sessions
+         set selected_photo_id = (
+           select id from photos
+           where session_id = $2 and id <> $1
+           order by created_at desc
+           limit 1
+         )
+         where id = $2 and selected_photo_id = $1`,
+        [id, photo.session_id],
+      );
+    }
+    await client.query(`delete from photos where id = $1`, [id]);
+    if (photo.session_id) {
+      await client.query(
+        `update sessions
+         set status = case
+               when status in ('CAPTURED', 'PROCESSING', 'READY_TO_DISPLAY', 'DISPLAYING') then 'READY'
+               else status
+             end,
+             captured_at = null
+         where id = $1
+           and not exists (select 1 from photos where session_id = $1)`,
+        [photo.session_id],
+      );
+    }
+    await client.query("commit");
+    return true;
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function createSession(input: {

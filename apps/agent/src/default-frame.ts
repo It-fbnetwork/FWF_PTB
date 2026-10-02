@@ -44,9 +44,9 @@ export async function generateDefaultFramePng(
   <rect x="0" y="${barTop}" width="${width}" height="${barH}" fill="url(#bar)"/>
   <rect x="${pad}" y="${accentY}" width="${Math.round(width * 0.08)}" height="${Math.max(4, Math.round(height * 0.005))}" fill="#E85D04"/>
 
-  <text x="${pad}" y="${titleY}" fill="#FFF8F0" font-family="Helvetica Neue, Arial, sans-serif" font-size="${titleSize}" font-weight="700" letter-spacing="3">FACE WASH FOX</text>
-  <text x="${pad}" y="${subY}" fill="#F4A261" font-family="Helvetica Neue, Arial, sans-serif" font-size="${subSize}" font-weight="500" letter-spacing="2">PHOTO BOOTH</text>
-  <text x="${foxX - 12}" y="${foxY + foxSize * 0.62}" fill="#FFF8F0" font-family="Helvetica Neue, Arial, sans-serif" font-size="${tagSize}" font-weight="500" letter-spacing="1" text-anchor="end">#FaceWashFox</text>
+  <text x="${pad}" y="${titleY}" fill="#FFF8F0" font-family="Poppins, Arial, sans-serif" font-size="${titleSize}" font-weight="700" letter-spacing="3">FACE WASH FOX</text>
+  <text x="${pad}" y="${subY}" fill="#F4A261" font-family="Poppins, Arial, sans-serif" font-size="${subSize}" font-weight="500" letter-spacing="2">PHOTO BOOTH</text>
+  <text x="${foxX - 12}" y="${foxY + foxSize * 0.62}" fill="#FFF8F0" font-family="Poppins, Arial, sans-serif" font-size="${tagSize}" font-weight="500" letter-spacing="1" text-anchor="end">#FaceWashFox</text>
 
   <g transform="translate(${foxX} ${foxY}) scale(${foxSize / 112})">
     <path d="M16 86 L56 18 L96 86 Z" fill="url(#fox)"/>
