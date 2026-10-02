@@ -7,11 +7,15 @@ const photoEl = document.getElementById("photo");
 const photoPlaceholderEl = document.getElementById("photo-placeholder");
 const actionsEl = document.getElementById("actions");
 const downloadEl = document.getElementById("download");
+const shareEl = document.getElementById("share");
+const shareFeedbackEl = document.getElementById("share-feedback");
 const frameStepEl = document.getElementById("frame-step");
 const frameLoadingEl = document.getElementById("frame-loading");
 const captureButtonEl = document.getElementById("capture-button");
 const captureStatusEl = document.getElementById("capture-status");
 let refreshInFlight = false;
+let currentPhotoUrl = "";
+let shareFeedbackTimer;
 
 if (
   !(statusEl instanceof HTMLElement) ||
@@ -22,6 +26,8 @@ if (
   !(photoPlaceholderEl instanceof HTMLElement) ||
   !(actionsEl instanceof HTMLElement) ||
   !(downloadEl instanceof HTMLAnchorElement) ||
+  !(shareEl instanceof HTMLButtonElement) ||
+  !(shareFeedbackEl instanceof HTMLElement) ||
   !(frameStepEl instanceof HTMLElement) ||
   !(frameLoadingEl instanceof HTMLElement) ||
   !(captureButtonEl instanceof HTMLButtonElement) ||
@@ -88,6 +94,7 @@ function render(session) {
     actionsEl.hidden = false;
     downloadEl.href = selected.url;
     downloadEl.download = selected.processedFilename || "fwf-photo.jpg";
+    currentPhotoUrl = selected.url;
     if (
       session.status === "READY_TO_DISPLAY" ||
       session.status === "DISPLAYING" ||
@@ -100,8 +107,64 @@ function render(session) {
     photoEl.hidden = true;
     photoEl.removeAttribute("src");
     actionsEl.hidden = true;
+    currentPhotoUrl = "";
   }
 }
+
+function showShareFeedback(message) {
+  window.clearTimeout(shareFeedbackTimer);
+  shareFeedbackEl.textContent = message;
+  shareFeedbackEl.hidden = false;
+  shareFeedbackTimer = window.setTimeout(() => {
+    shareFeedbackEl.hidden = true;
+  }, 2400);
+}
+
+async function copyPhotoLink(url) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(url);
+    return;
+  }
+
+  const input = document.createElement("textarea");
+  input.value = url;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.append(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("Không thể sao chép đường dẫn ảnh");
+}
+
+shareEl.addEventListener("click", async () => {
+  if (!currentPhotoUrl) return;
+  shareEl.disabled = true;
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: "Ảnh Face Wash Fox",
+        text: "Khoảnh khắc của tôi tại Face Wash Fox",
+        url: currentPhotoUrl,
+      });
+      return;
+    }
+
+    await copyPhotoLink(currentPhotoUrl);
+    showShareFeedback("Đã sao chép đường dẫn ảnh");
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") return;
+    try {
+      await copyPhotoLink(currentPhotoUrl);
+      showShareFeedback("Đã sao chép đường dẫn ảnh");
+    } catch {
+      showShareFeedback("Không thể chia sẻ ảnh trên trình duyệt này");
+    }
+  } finally {
+    shareEl.disabled = false;
+  }
+});
 
 async function previewFrame(frameId) {
   const res = await fetch("/api/display/frame-preview", {

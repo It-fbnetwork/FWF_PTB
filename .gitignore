@@ -12,3 +12,4 @@ apps/web/tsconfig.tsbuildinfo
 apps/agent/data/
 .vercel
 .env*
+.local/

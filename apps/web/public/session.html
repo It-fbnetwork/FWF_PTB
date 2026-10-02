@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>FWF Session</title>
-    <link rel="stylesheet" href="/assets/app.css?v=mobile-camera-fix-1" />
+    <link rel="stylesheet" href="/assets/app.css?v=share-1" />
   </head>
   <body class="page-session">
     <main class="shell shell--narrow">
@@ -78,7 +78,22 @@
           />
         </svg>
       </a>
+      <button
+        class="download-fab__btn"
+        id="share"
+        type="button"
+        aria-label="Chia sẻ ảnh"
+        title="Chia sẻ ảnh"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+          <path
+            fill="currentColor"
+            d="M18 16a3 3 0 0 0-2.39 1.19L8.91 13.8a3.07 3.07 0 0 0 0-1.6l6.7-3.39A3 3 0 1 0 15 7a2.9 2.9 0 0 0 .09.72L8.4 11.1a3 3 0 1 0 0 3.8l6.69 3.38A2.9 2.9 0 0 0 15 19a3 3 0 1 0 3-3Z"
+          />
+        </svg>
+      </button>
     </div>
-    <script src="/assets/session.js?v=remote-capture-1" type="module"></script>
+    <p id="share-feedback" class="share-feedback" role="status" aria-live="polite" hidden></p>
+    <script src="/assets/session.js?v=share-1" type="module"></script>
   </body>
 </html>

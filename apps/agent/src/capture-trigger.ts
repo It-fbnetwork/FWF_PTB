@@ -4,6 +4,17 @@ import { log } from "./logger.js";
 
 const execFileAsync = promisify(execFile);
 
+const ptpWindowCaptureScript = `
+$process = Get-Process -Name 'CameraControlPTP' -ErrorAction SilentlyContinue | Select-Object -First 1
+if (-not $process) { throw 'CameraControlPTP is not running' }
+$event = [Threading.EventWaitHandle]::OpenExisting('Local\\FWF_PTP_CAPTURE')
+try {
+  [void]$event.Set()
+} finally {
+  $event.Dispose()
+}
+`;
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -19,7 +30,18 @@ export async function triggerCapture(countdownMs: number): Promise<void> {
   // Sony Imaging Edge Remote's official keyboard shortcut for Photo is "1".
   const key = process.env.FWF_CAPTURE_KEY ?? "1";
   const escapedKey = key.replace(/'/g, "''");
-  const mode = process.env.FWF_CAPTURE_MODE ?? "alt-tab";
+  const mode = process.env.FWF_CAPTURE_MODE ?? "ptp-window";
+
+  if (mode === "ptp-window") {
+    await execFileAsync(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-Command", ptpWindowCaptureScript],
+      { windowsHide: true },
+    );
+    log.success("Sony PTP S2 capture command sent in the background.");
+    return;
+  }
+
   const script = [
     "$shell = New-Object -ComObject WScript.Shell",
     ...(mode === "alt-tab"
