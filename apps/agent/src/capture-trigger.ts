@@ -21,16 +21,11 @@ export async function triggerCapture(countdownMs: number): Promise<void> {
   const escapedKey = key.replace(/'/g, "''");
   const script = [
     "$shell = New-Object -ComObject WScript.Shell",
-    "$remote = Get-Process -Name 'Remote' -ErrorAction SilentlyContinue | Select-Object -First 1",
-    "if (-not $remote) { throw 'Sony Imaging Edge Remote process not found' }",
-    "$active = $shell.AppActivate($remote.Id)",
-    "if (-not $active) { throw 'Sony Imaging Edge Remote window not found' }",
-    "Start-Sleep -Milliseconds 250",
     `$shell.SendKeys('${escapedKey}')`,
   ].join("; ");
 
   await execFileAsync("powershell.exe", ["-NoProfile", "-NonInteractive", "-Command", script], {
     windowsHide: true,
   });
-  log.success("Capture key sent to Sony Imaging Edge Remote.");
+  log.success("Capture key sent to the active Windows application.");
 }
