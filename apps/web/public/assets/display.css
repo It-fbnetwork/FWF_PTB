@@ -172,6 +172,20 @@ html:-webkit-full-screen body {
     0 8px 20px rgba(0, 0, 0, 0.72);
 }
 
+.idle__qr {
+  display: block;
+  width: clamp(5.5rem, 24cqi, 10rem);
+  aspect-ratio: 1;
+  margin: clamp(0.9rem, 2.6cqh, 1.6rem) auto 0;
+  padding: clamp(0.35rem, 1.4cqi, 0.6rem);
+  border-radius: 0.45rem;
+  background: #fff;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.36),
+    0 10px 28px rgba(0, 0, 0, 0.26);
+  object-fit: contain;
+}
+
 .photo,
 .frame-preview {
   background: #000;
